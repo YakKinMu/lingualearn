@@ -1,0 +1,457 @@
+/* ===== Battle & Rank ===== */
+#battle {
+  background: linear-gradient(180deg, transparent, rgba(239, 68, 68, 0.04));
+}
+
+.battle-header { border-color: var(--red) !important; }
+
+.rank-hero {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 1.5rem;
+}
+
+.rank-emblem {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  border: 3px solid;
+  flex-shrink: 0;
+}
+
+.rank-hero-info { flex: 1; }
+.rank-hero-info h3 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+.rank-hero-info p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.75rem; }
+
+.rank-progress-wrap { max-width: 400px; }
+.rank-progress-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.rank-tiers {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.rank-tier-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.rank-tier-chip.active {
+  border-color: currentColor;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.battle-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.opponent-list, .rank-board {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+}
+
+.opponent-list h3, .rank-board h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+}
+
+.opponent-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  margin-bottom: 0.5rem;
+  transition: border-color 0.2s;
+}
+
+.opponent-card:hover { border-color: var(--red); }
+
+.opp-avatar { font-size: 1.8rem; }
+.opp-info { flex: 1; }
+.opp-info strong { display: block; font-size: 0.9rem; }
+.opp-info span { font-size: 0.75rem; color: var(--text-muted); }
+
+.rank-lb-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  margin-bottom: 0.3rem;
+  font-size: 0.85rem;
+}
+
+.rank-lb-row.you { background: var(--red-bg); border: 1px solid var(--red-border); }
+.rank-lb-row.top1 { background: rgba(245, 158, 11, 0.1); }
+.rank-lb-row.top2 { background: rgba(192, 192, 192, 0.08); }
+.rank-lb-row.top3 { background: rgba(205, 127, 50, 0.08); }
+
+.lb-pos { font-weight: 700; width: 24px; color: var(--text-muted); }
+.lb-rp { margin-left: auto; font-weight: 600; color: var(--orange); }
+
+.battle-how {
+  grid-column: 1 / -1;
+  padding: 1rem 1.25rem;
+  background: var(--bg-elevated);
+  border-radius: var(--radius);
+  border: 1px dashed var(--border);
+}
+
+.battle-how h4 { margin-bottom: 0.5rem; }
+.battle-how ol {
+  padding-left: 1.25rem;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 2rem;
+}
+
+.nav-battle {
+  background: linear-gradient(135deg, var(--red), #b91c1c) !important;
+  color: white !important;
+  border-radius: 8px;
+}
+
+/* Battle Modal */
+.battle-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.battle-modal.hidden { display: none; }
+
+.battle-screen {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  max-height: 92vh;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Center-screen hit/miss popup is styled inline by WordBattle.popup() in
+   word-battle.js so it always renders correctly even if this stylesheet
+   is out of date — no rules needed here. */
+
+/* Slime avatar (custom SVG in place of a plain emoji) */
+.avatar-svg {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.2em;
+  flex-shrink: 0;
+}
+
+.battle-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+}
+
+.battle-topbar h3 { font-size: 1rem; }
+.battle-close { background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer; }
+
+#battle-canvas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+/* Arena */
+.battle-arena {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(16,185,129,0.08), rgba(239,68,68,0.08));
+  border-radius: var(--radius-lg);
+}
+
+.battle-arena.compact { grid-template-columns: 1fr auto 1fr; padding: 0.75rem; }
+
+.fighter {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fighter.enemy-side { flex-direction: row-reverse; }
+.fighter.align-right { text-align: right; }
+.fighter.mini { font-size: 0.85rem; justify-content: center; }
+
+.fighter-avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--bg-elevated);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  border: 2px solid var(--border);
+}
+
+.fighter-info strong { display: block; font-size: 0.9rem; }
+.fighter-rank { font-size: 0.75rem; font-weight: 600; }
+
+.hp-bar {
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 0.35rem 0 0.2rem;
+  min-width: 120px;
+}
+
+.hp-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+.player-hp { background: linear-gradient(90deg, var(--green), #059669); }
+.enemy-hp { background: linear-gradient(90deg, var(--red), #b91c1c); }
+.hp-text { font-size: 0.72rem; color: var(--text-muted); }
+
+.battle-vs {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.turn-badge {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  background: var(--purple-bg);
+  color: var(--purple);
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.vs-text { font-size: 1.1rem; font-weight: 700; }
+
+.timer-badge {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--blue);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--blue-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.timer-badge.warn {
+  color: var(--red);
+  border-color: var(--red);
+  animation: pulse-text 0.5s infinite;
+}
+
+.hit-flash { animation: hitFlash 0.5s ease; }
+
+@keyframes hitFlash {
+  0%, 100% { filter: none; }
+  50% { filter: brightness(1.8); transform: scale(1.02); }
+}
+
+/* Puzzle */
+.battle-puzzle {
+  background: var(--bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.puzzle-label {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin-bottom: 0.75rem;
+}
+
+.answer-zone {
+  min-height: 56px;
+  padding: 0.75rem;
+  background: var(--bg-card);
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.answer-placeholder { color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
+
+.word-bank {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1rem;
+  min-height: 48px;
+}
+
+.word-chip {
+  padding: 0.5rem 0.9rem;
+  border-radius: 20px;
+  border: 2px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.word-chip.in-bank:hover {
+  border-color: var(--blue);
+  background: var(--blue-bg);
+  transform: translateY(-2px);
+}
+
+.word-chip.in-answer {
+  border-color: var(--green);
+  background: var(--green-bg);
+  color: var(--green);
+}
+
+.word-chip.static {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.battle-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.battle-actions .btn-primary {
+  background: linear-gradient(135deg, var(--red), #b91c1c) !important;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+}
+
+/* Log */
+.battle-log {
+  max-height: 100px;
+  overflow-y: auto;
+  font-size: 0.82rem;
+}
+
+.log-line { padding: 0.25rem 0; }
+.log-line.good { color: var(--green); }
+.log-line.bad { color: var(--red); }
+.log-line.enemy { color: var(--orange); }
+.log-line.hint { color: var(--blue); font-style: italic; }
+.log-line.info { color: var(--text-muted); }
+
+/* Enemy turn */
+.enemy-turn-panel {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.enemy-thinking { font-size: 1.1rem; margin-bottom: 1rem; }
+
+.enemy-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+}
+
+.enemy-hint { color: var(--text-muted); font-size: 0.85rem; }
+
+/* Result */
+.battle-result {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.result-banner {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.result-banner.win { color: var(--green); }
+.result-banner.lose { color: var(--red); }
+
+.result-rp {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0.75rem 0;
+}
+
+.result-rp.up { color: var(--green); }
+.result-rp.down { color: var(--red); }
+
+.result-rank { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.5rem; }
+.result-record { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.5rem; }
+
+.result-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .battle-layout { grid-template-columns: 1fr; }
+  .rank-hero { flex-direction: column; text-align: center; }
+  .battle-arena { grid-template-columns: 1fr; }
+  .fighter.enemy-side { flex-direction: row; }
+  .battle-how ol { grid-template-columns: 1fr; }
+}

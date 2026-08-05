@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LinguaLearn — โปรไฟล์</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body data-page="profile">
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-icon">📖</span>
+      <span class="brand-name">LinguaLearn</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" data-page="levels">ข้อมูลตามระดับ</a></li>
+      <li><a href="vocab.html" data-page="vocab">คำศัพท์รวม</a></li>
+      <li><a href="battle.html" data-page="battle" class="nav-battle">⚔️ Word Battle</a></li>
+      <li><a href="progress.html" data-page="progress">สถิติ</a></li>
+    </ul>
+    <a href="profile.html" class="nav-user active" aria-label="เปิดโปรไฟล์ของฉัน">
+      <div class="streak-badge">🔥 7 วัน</div>
+      <div class="user-level-badge" id="nav-level">B1</div>
+      <div class="user-avatar">ห</div>
+    </a>
+    <button class="nav-toggle" aria-label="เปิดเมนู">☰</button>
+  </nav>
+
+  <header class="hero hero-compact hero-sub">
+    <div class="hero-content">
+      <p class="hero-label">บัญชีของฉัน</p>
+      <h1>โปรไฟล์ <span class="highlight">ผู้เรียน</span></h1>
+      <p class="hero-desc">ข้อมูลบัญชี ระดับ และสถิติการเรียนของคุณทั้งหมด</p>
+    </div>
+    <div class="hero-stats" id="hero-stats"></div>
+  </header>
+
+  <main class="content-section page-main" id="profile">
+    <div class="section-header profile-header">
+      <h2>ข้อมูลโปรไฟล์</h2>
+      <p>แก้ไขชื่อของคุณ และดูสถิติโดยรวมทั้งหมด</p>
+    </div>
+
+    <div class="profile-card" id="profile-card"></div>
+    <div class="dashboard-grid" id="profile-stats-grid"></div>
+  </main>
+
+  <div class="chatbot-widget hidden" id="chatbot">
+    <div class="chatbot-header">
+      <span>🤖 AI ช่วยเหลือ</span>
+      <button class="chatbot-close" id="close-chatbot">✕</button>
+    </div>
+    <div class="chatbot-messages" id="chat-messages"></div>
+    <div class="chatbot-input">
+      <input type="text" id="chat-input" placeholder="ถามเรื่องไวยากรณ์หรือคำศัพท์..." />
+      <button id="chat-send">ส่ง</button>
+    </div>
+  </div>
+  <button class="chatbot-fab" id="chat-fab" title="เปิด AI">🤖</button>
+
+  <footer class="footer">
+    <p>© 2026 LinguaLearn — ข้อมูลภาษาอังกฤษตามระดับ CEFR (A1–C2)</p>
+    <button class="btn btn-outline btn-sm" id="open-chatbot-footer">ถาม AI</button>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/stats-store.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
