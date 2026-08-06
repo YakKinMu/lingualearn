@@ -2,7 +2,24 @@ let activeLevel = DATA.currentLevel;
 let activeDataTab = 'grammar';
 const PAGE = document.body?.dataset.page || 'levels';
 
+const AUTH_REDIRECTING = (() => {
+  if (typeof AuthStore === 'undefined') return false;
+  if (PAGE === 'login') {
+    if (AuthStore.isLoggedIn()) { window.location.href = 'index.html'; return true; }
+    return false;
+  }
+  if (!AuthStore.isLoggedIn()) { window.location.href = 'login.html'; return true; }
+  return false;
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
+  if (AUTH_REDIRECTING) return;
+
+  if (PAGE === 'login') {
+    initAuthPage();
+    return;
+  }
+
   StatsStore.init();
   activeLevel = DATA.currentLevel;
   renderUser();
@@ -24,9 +41,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBattleSection();
     WordBattle.init();
   }
+  if (PAGE === 'spelling') {
+    renderSpellingSection();
+    SpellingGame.init();
+  }
   if (PAGE === 'progress') {
     renderProgress();
     initStatsActions();
+  }
+  if (PAGE === 'profile') {
+    renderProfile();
+    renderProfileStats();
+    initProfileEdit();
   }
 });
 
@@ -38,14 +64,25 @@ function renderAll() {
   }
   if (PAGE === 'vocab') renderAllVocabulary();
   if (PAGE === 'battle') renderBattleSection();
+  if (PAGE === 'spelling') renderSpellingSection();
   if (PAGE === 'progress') renderProgress();
+  if (PAGE === 'profile') { renderProfile(); renderProfileStats(); }
 }
 
 function refreshUI() {
   renderUser();
   if (PAGE === 'levels') renderLevelTabs();
   if (PAGE === 'battle') renderBattleSection();
+  if (PAGE === 'spelling') renderSpellingSection();
   if (PAGE === 'progress') renderProgress();
+}
+
+function getPlayerAvatarHTML() {
+  const u = DATA.user;
+  if (u.avatarImage) {
+    return `<img src="${u.avatarImage}" class="avatar-svg avatar-photo" alt="${escapeHtml(u.name)}" />`;
+  }
+  return escapeHtml(u.avatar);
 }
 
 function renderUser() {
@@ -53,7 +90,7 @@ function renderUser() {
   const battle = StatsStore.get().battle || {};
   const rank = RankSystem.getRank(battle.rankPoints || 0);
   setText('.streak-badge', `🔥 ${u.streak} วัน`);
-  setText('.user-avatar', u.avatar);
+  setHtml('.user-avatar', getPlayerAvatarHTML());
   setText('#nav-level', `${rank.icon} ${rank.label}`);
   setHtml('#hero-stats', `
     <div class="stat-card"><span class="stat-value">${rank.icon}</span><span class="stat-label">${rank.label}</span></div>
@@ -92,7 +129,7 @@ function renderBattleSection() {
 
   const allPlayers = [
     ...DATA.rankLeaderboard.map(p => ({ ...p, isYou: false })),
-    { name: DATA.user.name, avatar: DATA.user.avatar, rankRP: battle.rankPoints, wins: battle.wins, isYou: true },
+    { name: DATA.user.name, avatar: getPlayerAvatarHTML(), rankRP: battle.rankPoints, wins: battle.wins, isYou: true },
   ].sort((a, b) => b.rankRP - a.rankRP);
 
   const lbHtml = allPlayers.map((p, i) => {
@@ -153,6 +190,57 @@ function renderBattleSection() {
 
   el.querySelectorAll('[data-start-battle]').forEach(btn => {
     btn.addEventListener('click', () => WordBattle.start(btn.dataset.startBattle));
+  });
+}
+
+function renderSpellingSection() {
+  const el = document.getElementById('spelling-section');
+  if (!el) return;
+
+  const sp = StatsStore.get().spelling || { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 };
+  const totalAnswered = sp.totalCorrect + sp.totalWrong;
+  const accuracy = totalAnswered > 0 ? Math.round((sp.totalCorrect / totalAnswered) * 100) : 0;
+
+  const levelChips = ['all', ...DATA.levels].map(lv => `
+    <button class="rank-tier-chip spelling-level-chip${lv === 'all' ? ' active' : ''}" data-spelling-level="${lv}">
+      ${lv === 'all' ? '🔀 ทุกระดับ' : lv}
+    </button>
+  `).join('');
+
+  el.innerHTML = `
+    <div class="rank-hero">
+      <div class="rank-emblem" style="border-color:var(--purple);background:var(--purple-bg)">✏️</div>
+      <div class="rank-hero-info">
+        <h3>Spelling Bee — เกมสะกดคำ</h3>
+        <p>คะแนนสูงสุด ${sp.bestScore} • เล่นแล้ว ${sp.gamesPlayed} ครั้ง • ความแม่นยำ ${accuracy}% • สตรีคสูงสุด ${sp.bestStreak}</p>
+      </div>
+      <button class="btn btn-primary" id="spelling-start-btn" data-start-spelling="all">✏️ เริ่มเกม</button>
+    </div>
+
+    <div class="spelling-level-picker">
+      <p class="puzzle-label">เลือกระดับที่จะฝึก:</p>
+      <div class="rank-tiers">${levelChips}</div>
+    </div>
+
+    <div class="battle-how">
+      <h4>วิธีเล่น — สะกดคำให้ถูกต้อง</h4>
+      <ol>
+        <li>ระบบสุ่มคำศัพท์ 10 คำ พร้อมความหมายและตัวอย่างประโยค</li>
+        <li>พิมพ์คำศัพท์ภาษาอังกฤษที่ถูกต้องลงในช่อง</li>
+        <li>ใช้ปุ่ม 💡 คำใบ้ได้ถ้าติด แต่คะแนนจะลดลง</li>
+        <li>ตอบถูกไม่ใช้คำใบ้ = 10 คะแนน/ข้อ, ยิ่งสตรีคยาวยิ่งดี</li>
+        <li>จบเกมแล้วได้ XP ตามคะแนนที่ทำได้</li>
+      </ol>
+    </div>
+  `;
+
+  let selectedLevel = 'all';
+  el.querySelectorAll('.spelling-level-chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      selectedLevel = chip.dataset.spellingLevel;
+      el.querySelectorAll('.spelling-level-chip').forEach(c => c.classList.toggle('active', c === chip));
+      document.getElementById('spelling-start-btn')?.setAttribute('data-start-spelling', selectedLevel);
+    });
   });
 }
 
@@ -585,6 +673,224 @@ function initStatsActions() {
     };
     reader.readAsText(file);
     e.target.value = '';
+  });
+}
+
+function initAuthPage() {
+  const loginForm = document.getElementById('login-form');
+  const registerForm = document.getElementById('register-form');
+  const errorEl = document.getElementById('auth-error');
+
+  const showError = msg => { if (errorEl) errorEl.textContent = msg; };
+
+  document.getElementById('show-register')?.addEventListener('click', () => {
+    loginForm?.classList.add('hidden');
+    registerForm?.classList.remove('hidden');
+    showError('');
+  });
+  document.getElementById('show-login')?.addEventListener('click', () => {
+    registerForm?.classList.add('hidden');
+    loginForm?.classList.remove('hidden');
+    showError('');
+  });
+
+  loginForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    const username = document.getElementById('login-username')?.value || '';
+    const password = document.getElementById('login-password')?.value || '';
+    const res = AuthStore.login(username, password);
+    if (!res.ok) { showError(res.error); return; }
+    window.location.href = 'index.html';
+  });
+
+  registerForm?.addEventListener('submit', e => {
+    e.preventDefault();
+    const displayName = document.getElementById('register-displayname')?.value || '';
+    const username = document.getElementById('register-username')?.value || '';
+    const password = document.getElementById('register-password')?.value || '';
+    const confirm = document.getElementById('register-confirm')?.value || '';
+    if (password !== confirm) { showError('รหัสผ่านไม่ตรงกัน'); return; }
+    const res = AuthStore.register(username, password, displayName);
+    if (!res.ok) { showError(res.error); return; }
+    window.location.href = 'index.html';
+  });
+}
+
+function renderProfile() {
+  const card = document.getElementById('profile-card');
+  if (!card) return;
+  const u = DATA.user;
+  const battle = StatsStore.get().battle || {};
+  const rank = RankSystem.getRank(battle.rankPoints || 0);
+  const joined = new Date(u.joinDate);
+  const daysSince = Math.max(0, Math.floor((Date.now() - joined.getTime()) / 86400000));
+  const joinedLabel = isNaN(joined.getTime())
+    ? u.joinDate
+    : joined.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const avatarInner = u.avatarImage
+    ? `<img src="${u.avatarImage}" alt="${escapeHtml(u.name)}" />`
+    : escapeHtml(u.avatar);
+
+  card.innerHTML = `
+    <div class="profile-identity">
+      <div class="profile-avatar-wrap">
+        <div class="profile-avatar-lg" id="profile-avatar-lg">${avatarInner}</div>
+        <button type="button" class="profile-avatar-edit-btn" id="profile-avatar-trigger" title="เปลี่ยนรูปโปรไฟล์">📷</button>
+        <input type="file" id="profile-avatar-input" accept="image/*" class="visually-hidden" />
+      </div>
+      <div class="profile-identity-info">
+        <h3>${escapeHtml(u.name)}</h3>
+        <p class="profile-nickname">เรียกฉันว่า "${escapeHtml(u.nickname)}"</p>
+        <div class="profile-badges">
+          <span class="rank-tier-chip active" style="color:${rank.color};border-color:${rank.color}">${rank.icon} ${rank.labelTh}</span>
+          <span class="streak-badge">🔥 ${u.streak} วัน</span>
+        </div>
+        <p class="profile-joined">สมาชิกตั้งแต่ ${joinedLabel} • ${daysSince} วันที่แล้ว</p>
+        ${u.avatarImage ? '<button type="button" class="auth-link" id="profile-avatar-remove">ลบรูป ใช้ตัวอักษรแทน</button>' : ''}
+      </div>
+      <div class="profile-actions">
+        <button class="btn btn-outline btn-sm" id="profile-edit-btn" type="button">✏️ แก้ไขโปรไฟล์</button>
+        <button class="btn btn-outline btn-sm stats-reset" id="profile-logout-btn" type="button">🚪 ออกจากระบบ</button>
+      </div>
+    </div>
+    <form class="profile-edit-form hidden" id="profile-edit-form">
+      <label for="profile-input-name">ชื่อเต็ม</label>
+      <input type="text" id="profile-input-name" value="${escapeHtml(u.name)}" maxlength="60" required />
+      <label for="profile-input-nickname">ชื่อเล่น (ใช้เป็นตัวอักษรอวาตาร์ ถ้าไม่มีรูป)</label>
+      <input type="text" id="profile-input-nickname" value="${escapeHtml(u.nickname)}" maxlength="20" required />
+      <div class="profile-edit-actions">
+        <button type="submit" class="btn btn-primary btn-sm">บันทึก</button>
+        <button type="button" class="btn btn-outline btn-sm" id="profile-cancel-btn">ยกเลิก</button>
+      </div>
+    </form>
+  `;
+}
+
+function renderProfileStats() {
+  const grid = document.getElementById('profile-stats-grid');
+  if (!grid) return;
+  const u = DATA.user;
+  const battle = StatsStore.get().battle || {};
+  const spelling = StatsStore.get().spelling || { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 };
+  const rank = RankSystem.getRank(battle.rankPoints || 0);
+  const weeklyPct = Math.min(100, Math.round((u.weeklyLessonsDone / u.weeklyGoalLessons) * 100));
+  const spellAnswered = spelling.totalCorrect + spelling.totalWrong;
+  const spellAccuracy = spellAnswered > 0 ? Math.round((spelling.totalCorrect / spellAnswered) * 100) : 0;
+
+  grid.innerHTML = `
+    <div class="dashboard-card">
+      <h3>⭐ ภาพรวม</h3>
+      <div class="stats-detail">
+        <span>ระดับ: <strong>${u.level}</strong></span>
+        <span>XP รวม: <strong>${u.xp.toLocaleString()}</strong></span>
+        <span>Streak ต่อเนื่อง: <strong>${u.streak} วัน</strong></span>
+        <span>คำศัพท์ที่รู้จัก: <strong>${u.vocabCount.toLocaleString()}</strong></span>
+      </div>
+    </div>
+    <div class="dashboard-card">
+      <h3>⚔️ สถิติ Word Battle</h3>
+      <div class="stats-detail">
+        <span>Rank: <strong>${rank.icon} ${rank.labelTh}</strong></span>
+        <span>RP: <strong>${battle.rankPoints || 0}</strong></span>
+        <span>สถิติ: <strong>${battle.wins || 0}W / ${battle.losses || 0}L</strong></span>
+        <span>Win streak สูงสุด: <strong>${battle.bestStreak || 0}</strong></span>
+      </div>
+    </div>
+    <div class="dashboard-card">
+      <h3>✏️ สถิติ Spelling Bee</h3>
+      <div class="stats-detail">
+        <span>คะแนนสูงสุด: <strong>${spelling.bestScore}</strong></span>
+        <span>เล่นแล้ว: <strong>${spelling.gamesPlayed} ครั้ง</strong></span>
+        <span>ความแม่นยำ: <strong>${spellAccuracy}%</strong></span>
+        <span>สตรีคสูงสุด: <strong>${spelling.bestStreak}</strong></span>
+      </div>
+    </div>
+    <div class="dashboard-card">
+      <h3>📚 เป้าหมายรายสัปดาห์</h3>
+      <div class="goal-progress">
+        <div class="goal-item">
+          <div class="goal-header"><span>บทเรียนต่อสัปดาห์</span><span>${u.weeklyLessonsDone}/${u.weeklyGoalLessons}</span></div>
+          <div class="progress-bar large"><span style="width:${weeklyPct}%"></span></div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function resizeImageToDataURL(file, size, callback) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const scale = Math.max(size / img.width, size / img.height);
+      const w = img.width * scale;
+      const h = img.height * scale;
+      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.onerror = () => callback(null);
+    img.src = e.target.result;
+  };
+  reader.onerror = () => callback(null);
+  reader.readAsDataURL(file);
+}
+
+function initProfileEdit() {
+  document.addEventListener('click', e => {
+    if (e.target.id === 'profile-edit-btn') {
+      document.getElementById('profile-edit-form')?.classList.remove('hidden');
+      document.getElementById('profile-input-name')?.focus();
+    }
+    if (e.target.id === 'profile-cancel-btn') {
+      document.getElementById('profile-edit-form')?.classList.add('hidden');
+    }
+    if (e.target.id === 'profile-avatar-trigger' || e.target.id === 'profile-avatar-lg') {
+      document.getElementById('profile-avatar-input')?.click();
+    }
+    if (e.target.id === 'profile-avatar-remove') {
+      StatsStore.updateProfile({ avatarImage: null });
+      renderUser();
+      renderProfile();
+    }
+    if (e.target.id === 'profile-logout-btn') {
+      if (confirm('ต้องการออกจากระบบใช่ไหม?')) {
+        AuthStore.logout();
+        window.location.href = 'login.html';
+      }
+    }
+  });
+
+  document.addEventListener('change', e => {
+    if (e.target.id !== 'profile-avatar-input') return;
+    const file = e.target.files?.[0];
+    if (!file || !file.type.startsWith('image/')) return;
+    if (file.size > 8 * 1024 * 1024) { alert('ไฟล์รูปใหญ่เกินไป (สูงสุด 8MB)'); return; }
+    resizeImageToDataURL(file, 240, dataUrl => {
+      if (!dataUrl) { alert('ไม่สามารถอ่านไฟล์รูปนี้ได้'); return; }
+      StatsStore.updateProfile({ avatarImage: dataUrl });
+      renderUser();
+      renderProfile();
+    });
+    e.target.value = '';
+  });
+
+  document.addEventListener('submit', e => {
+    if (e.target.id !== 'profile-edit-form') return;
+    e.preventDefault();
+    const name = document.getElementById('profile-input-name')?.value.trim();
+    const nickname = document.getElementById('profile-input-nickname')?.value.trim();
+    if (!name || !nickname) return;
+    const u = DATA.user;
+    const avatarUpdate = u.avatarImage ? {} : { avatar: nickname[0] };
+    StatsStore.updateProfile({ name, nickname, ...avatarUpdate });
+    renderUser();
+    renderProfile();
+    renderProfileStats();
   });
 }
 

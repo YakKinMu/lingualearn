@@ -152,7 +152,7 @@ const WordBattle = {
     this.canvas.innerHTML = `
       <div class="battle-arena">
         <div class="fighter player-side">
-          <div class="fighter-avatar">${DATA.user.avatar}</div>
+          <div class="fighter-avatar">${getPlayerAvatarHTML()}</div>
           <div class="fighter-info">
             <strong>${escapeHtml(DATA.user.nickname || DATA.user.name)}</strong>
             <span class="fighter-rank" style="color:${s.playerRank.color}">${s.playerRank.icon} ${s.playerRank.label}</span>
@@ -278,7 +278,7 @@ const WordBattle = {
     this.canvas.innerHTML = `
       <div class="battle-arena compact">
         <div class="fighter player-side mini">
-          <span>${DATA.user.avatar} ${s.playerHP} HP</span>
+          <span>${getPlayerAvatarHTML()} ${s.playerHP} HP</span>
         </div>
         <div class="battle-vs"><span>เทิร์น ${s.turn} — ตาคู่ต่อสู้</span></div>
         <div class="fighter enemy-side mini">
@@ -448,6 +448,8 @@ const SLIME_SVG = `<svg class="avatar-svg" viewBox="0 0 48 48" xmlns="http://www
 </svg>`;
 
 function avatarHTML(entity) {
+  const avatar = (entity && entity.avatar) || '';
+  if (avatar.trim().startsWith('<')) return avatar; // custom raw HTML (e.g. <img> tag) — use as-is
   if (entity && entity.avatarType === 'slime') return SLIME_SVG;
-  return escapeHtml((entity && entity.avatar) || '');
+  return escapeHtml(avatar);
 }

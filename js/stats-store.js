@@ -1,5 +1,10 @@
-const STORAGE_KEY = 'lingualearn_stats_v1';
+const STORAGE_KEY_PREFIX = 'lingualearn_stats_v1';
 const THAI_DAYS = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
+
+function getStorageKey() {
+  const username = (typeof AuthStore !== 'undefined' && AuthStore.getCurrentUsername()) || 'guest';
+  return `${STORAGE_KEY_PREFIX}_${username}`;
+}
 
 const RankSystem = {
   getRank(rankRP) {
@@ -46,7 +51,7 @@ const StatsStore = {
 
   init() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = localStorage.getItem(getStorageKey());
       this._stats = raw ? JSON.parse(raw) : this._createDefault();
     } catch {
       this._stats = this._createDefault();
@@ -58,6 +63,9 @@ const StatsStore = {
     if (!this._stats.battle) {
       this._stats.battle = { rankPoints: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, totalBattles: 0 };
     }
+    if (!this._stats.spelling) {
+      this._stats.spelling = { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 };
+    }
     this.save();
     this._syncToData();
     return this._stats;
@@ -67,7 +75,7 @@ const StatsStore = {
 
   save() {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this._stats));
+      localStorage.setItem(getStorageKey(), JSON.stringify(this._stats));
     } catch {
       /* localStorage unavailable (e.g. opened via file:// or blocked storage) — continue in-memory only */
     }
@@ -87,7 +95,7 @@ const StatsStore = {
   },
 
   reset() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* localStorage unavailable */ }
+    try { localStorage.removeItem(getStorageKey()); } catch { /* localStorage unavailable */ }
     this._stats = this._createDefault();
     this.save();
   },
@@ -100,15 +108,22 @@ const StatsStore = {
       return { date: d.toISOString().slice(0, 10), minutes: a.minutes, lessons: a.lessons, vocab: a.vocab };
     });
 
+    const username = (typeof AuthStore !== 'undefined' && AuthStore.getCurrentUsername()) || null;
+    const displayName = username ? AuthStore.getDisplayName(username) : null;
+    const userSeed = displayName
+      ? { ...DATA.user, name: displayName, nickname: displayName.split(' ')[0] || displayName, avatar: displayName.trim().charAt(0) || DATA.user.avatar }
+      : { ...DATA.user };
+
     return {
       version: 2,
       lastVisit: today,
       weekStart: this._weekStartKey(),
       currentLevel: DATA.currentLevel,
-      user: { ...DATA.user },
+      user: userSeed,
       counters: { chatMessages: 0, placementTests: 0, levelsViewed: DATA.levels.length },
       viewedLevels: [...DATA.levels],
       battle: { rankPoints: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, totalBattles: 0 },
+      spelling: { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 },
       activityLog,
       monthlyStats: { ...DATA.progress.monthlyStats },
       events: [],
@@ -236,6 +251,30 @@ const StatsStore = {
       losses: b.losses,
       streak: b.streak,
     };
+  },
+
+  recordSpelling(result) {
+    const s = this._stats;
+    const sp = s.spelling;
+    const { correct, wrong, score, bestStreakThisRound } = result;
+
+    sp.gamesPlayed += 1;
+    sp.totalCorrect += correct;
+    sp.totalWrong += wrong;
+    if (bestStreakThisRound > sp.bestStreak) sp.bestStreak = bestStreakThisRound;
+    if (score > sp.bestScore) sp.bestScore = score;
+
+    const xpGain = correct * 8 + Math.max(0, score - correct * 8);
+    s.user.xp += xpGain;
+
+    const today = this._getTodayActivity();
+    today.minutes += 5;
+    today.vocab += correct;
+    s.user.minutesToday += 5;
+    s.monthlyStats.totalMinutes += 5;
+    this.save();
+
+    return { xpGain, spelling: sp };
   },
 
   _buildWeeklyActivity() {

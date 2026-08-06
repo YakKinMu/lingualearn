@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LinguaLearn — Word Battle</title>
+  <title>LinguaLearn — สะกดคำ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/battle.css" />
+  <link rel="stylesheet" href="css/spelling.css" />
 </head>
-<body data-page="battle">
+<body data-page="spelling">
   <nav class="navbar">
     <a href="index.html" class="nav-brand">
       <span class="brand-icon">📖</span>
@@ -19,9 +20,9 @@
     <ul class="nav-links">
       <li><a href="index.html" data-page="levels">ข้อมูลตามระดับ</a></li>
       <li><a href="vocab.html" data-page="vocab">คำศัพท์รวม</a></li>
-      <li><a href="battle.html" data-page="battle" class="nav-battle active">⚔️ Word Battle</a></li>
+      <li><a href="battle.html" data-page="battle" class="nav-battle">⚔️ Word Battle</a></li>
       <li><a href="progress.html" data-page="progress">สถิติ</a></li>
-      <li><a href="spelling.html" data-page="spelling" class="nav-spelling">✏️ สะกดคำ</a></li>
+      <li><a href="spelling.html" data-page="spelling" class="nav-spelling active">✏️ สะกดคำ</a></li>
     </ul>
     <a href="profile.html" class="nav-user" aria-label="เปิดโปรไฟล์ของฉัน">
       <div class="streak-badge">🔥 7 วัน</div>
@@ -33,32 +34,32 @@
 
   <header class="hero hero-compact hero-sub">
     <div class="hero-content">
-      <p class="hero-label">เกมเทิร์นเบส</p>
-      <h1>⚔️ <span class="highlight">Word Battle</span> Arena</h1>
-      <p class="hero-desc">เรียงคำให้ถูกเพื่อโจมตี สะสม RP เลื่อน Rank — ต่อสู้กับบอท 8 ระดับ!</p>
+      <p class="hero-label">มินิเกมฝึกสะกดคำ</p>
+      <h1>✏️ <span class="highlight">Spelling Bee</span></h1>
+      <p class="hero-desc">ดูความหมายและตัวอย่างประโยค แล้วพิมพ์คำศัพท์ภาษาอังกฤษให้ถูกต้อง — สะสมคะแนนและ XP!</p>
       <div class="hero-actions">
-        <button class="btn btn-primary" data-start-battle="auto">⚔️ เริ่มต่อสู้เลย!</button>
-        <a href="index.html" class="btn btn-outline">ทบทวนคำศัพท์</a>
+        <button class="btn btn-primary" data-start-spelling="all">✏️ เริ่มเกมเลย!</button>
+        <a href="vocab.html" class="btn btn-outline">ทบทวนคำศัพท์</a>
       </div>
     </div>
     <div class="hero-stats" id="hero-stats"></div>
   </header>
 
-  <main class="content-section page-main" id="battle">
-    <div class="section-header battle-header">
-      <h2>⚔️ Word Battle Arena</h2>
-      <p>เกมเทิร์นเบส — เรียงคำให้ถูกเพื่อโจมตี สะสม RP เลื่อน Rank!</p>
+  <main class="content-section page-main" id="spelling">
+    <div class="section-header spelling-header">
+      <h2>✏️ Spelling Bee</h2>
+      <p>ฝึกสะกดคำศัพท์ภาษาอังกฤษ พร้อมคำใบ้และระบบให้คะแนน</p>
     </div>
-    <div id="battle-section"></div>
+    <div id="spelling-section"></div>
   </main>
 
-  <div class="battle-modal hidden" id="battle-modal">
-    <div class="battle-screen">
+  <div class="battle-modal hidden" id="spelling-modal">
+    <div class="battle-screen spelling-screen">
       <div class="battle-topbar">
-        <h3>⚔️ Word Battle — เรียงคำต่อสู้</h3>
-        <button class="battle-close" id="battle-close">✕</button>
+        <h3>✏️ Spelling Bee — สะกดคำ</h3>
+        <button class="battle-close" id="spelling-close">✕</button>
       </div>
-      <div id="battle-canvas"></div>
+      <div id="spelling-canvas"></div>
     </div>
   </div>
 
@@ -83,7 +84,7 @@
   <script src="js/data.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/stats-store.js"></script>
-  <script src="js/word-battle.js"></script>
+  <script src="js/spelling.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
