@@ -92,11 +92,8 @@ function renderUser() {
   setText('.streak-badge', `🔥 ${u.streak} วัน`);
   setHtml('.user-avatar', getPlayerAvatarHTML());
   setText('#nav-level', `${rank.icon} ${rank.label}`);
-  setHtml('#hero-stats', `
-    <div class="stat-card"><span class="stat-value">${rank.icon}</span><span class="stat-label">${rank.label}</span></div>
-    <div class="stat-card"><span class="stat-value">${battle.rankPoints || 0}</span><span class="stat-label">Rank Points</span></div>
-    <div class="stat-card"><span class="stat-value">${battle.wins || 0}</span><span class="stat-label">ชนะ ${battle.losses || 0} แพ้</span></div>
-  `);
+  const navLevelEl = document.getElementById('nav-level');
+  if (navLevelEl) navLevelEl.style.borderColor = `${rank.color}55`;
 }
 
 function renderBattleSection() {
