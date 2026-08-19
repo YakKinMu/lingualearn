@@ -56,6 +56,7 @@ const StatsStore = {
     } catch {
       this._stats = this._createDefault();
     }
+    this._migrateLegacyFakeSeed();
     this._handleDayRollover();
     this._handleWeekRollover();
     if (!this._stats.counters) this._stats.counters = { chatMessages: 0, placementTests: 0, levelsViewed: 0 };
@@ -66,20 +67,91 @@ const StatsStore = {
     if (!this._stats.spelling) {
       this._stats.spelling = { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 };
     }
-    this.save();
+    this.save({ skipCloud: true });
     this._syncToData();
+    // Make sure this player has an up-to-date row on the shared Firestore
+    // leaderboard as soon as they show up (not just after a battle).
+    if (typeof LeaderboardStore !== 'undefined') LeaderboardStore.syncCurrentUser();
+    // Pull this account's REAL saved progress from Firestore (works across
+    // any device/browser they log into) and reconcile it with what we have
+    // in this browser's localStorage cache. Fire-and-forget — the page
+    // renders instantly from the local cache first, then re-renders once
+    // the cloud copy (the source of truth) has loaded.
+    this._loadFromCloud();
     return this._stats;
   },
 
   get() { return this._stats; },
 
-  save() {
+  // opts.skipCloud: true = only write to localStorage, don't also push to
+  // Firestore (used while we're still merging data we just pulled FROM
+  // Firestore, to avoid an immediate pointless round-trip write).
+  save(opts = {}) {
     try {
       localStorage.setItem(getStorageKey(), JSON.stringify(this._stats));
     } catch {
       /* localStorage unavailable (e.g. opened via file:// or blocked storage) — continue in-memory only */
     }
     this._syncToData();
+    if (!opts.skipCloud) this._pushToCloud();
+  },
+
+  // ===== Firestore-backed persistence (users/{uid}) =====
+  // localStorage stays as a fast local cache so the UI always paints
+  // instantly, but Firestore is the real, permanent copy of a player's
+  // progress — the same account shows the same data on any device.
+  _cloudSaveTimer: null,
+
+  _getUserDocRef() {
+    const uid = typeof AuthStore !== 'undefined' ? AuthStore.getCurrentUsername() : null;
+    if (!uid || typeof firebase === 'undefined' || !firebase.firestore) return null;
+    try { return firebase.firestore().collection('users').doc(uid); } catch { return null; }
+  },
+
+  _pushToCloud() {
+    const ref = this._getUserDocRef();
+    if (!ref) return;
+    clearTimeout(this._cloudSaveTimer);
+    // Debounce: several `record()`/save() calls can fire in quick succession
+    // (chat messages, level views, etc.) — wait for things to settle before
+    // writing, instead of hitting Firestore on every single change.
+    this._cloudSaveTimer = setTimeout(() => {
+      ref.set({
+        stats: this._stats,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true }).catch(err => {
+        console.warn('StatsStore._pushToCloud failed:', err?.message || err);
+      });
+    }, 800);
+  },
+
+  async _loadFromCloud() {
+    const ref = this._getUserDocRef();
+    if (!ref) return;
+    try {
+      const doc = await ref.get();
+      if (doc.exists && doc.data()?.stats) {
+        // Cloud copy is the real, cross-device data for this account —
+        // it replaces whatever this browser's local cache had.
+        this._stats = { ...this._createDefault(), ...doc.data().stats, version: doc.data().stats.version || 2 };
+        const wasLegacyFake = this._stats.version < 3;
+        this._migrateLegacyFakeSeed();
+        this._handleDayRollover();
+        this._handleWeekRollover();
+        // If we just cleaned up old fake demo numbers, push the corrected
+        // copy back to Firestore so it's fixed everywhere, not just here.
+        this.save({ skipCloud: !wasLegacyFake });
+        if (typeof LeaderboardStore !== 'undefined') LeaderboardStore.syncCurrentUser();
+        if (typeof renderAll === 'function') renderAll();
+      } else {
+        // First time this account has ever loaded — push what we have
+        // locally (fresh defaults, or a pre-existing local cache) up as
+        // the first cloud copy.
+        this._pushToCloud();
+      }
+    } catch (err) {
+      console.warn('StatsStore._loadFromCloud failed:', err?.message || err);
+    }
   },
 
   exportJSON() { return JSON.stringify(this._stats, null, 2); },
@@ -87,6 +159,7 @@ const StatsStore = {
   updateProfile(fields) {
     Object.assign(this._stats.user, fields);
     this.save();
+    if (typeof LeaderboardStore !== 'undefined') LeaderboardStore.syncCurrentUser();
   },
 
   importJSON(json) {
@@ -97,37 +170,93 @@ const StatsStore = {
   reset() {
     try { localStorage.removeItem(getStorageKey()); } catch { /* localStorage unavailable */ }
     this._stats = this._createDefault();
-    this.save();
+    const ref = this._getUserDocRef();
+    if (ref) ref.set({ stats: this._stats, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, { merge: false }).catch(() => {});
+    this.save({ skipCloud: true });
   },
 
   _createDefault() {
     const today = this._todayKey();
-    const activityLog = DATA.progress.weeklyActivity.map((a, i) => {
+    // Real new account = real zeros. The last 7 days are genuinely empty
+    // (they'll fill in as the person actually studies) — not the fake demo
+    // chart numbers from DATA.progress.weeklyActivity.
+    const activityLog = [];
+    for (let i = 6; i >= 0; i--) {
       const d = new Date();
-      d.setDate(d.getDate() - (6 - i));
-      return { date: d.toISOString().slice(0, 10), minutes: a.minutes, lessons: a.lessons, vocab: a.vocab };
-    });
+      d.setDate(d.getDate() - i);
+      activityLog.push({ date: d.toISOString().slice(0, 10), minutes: 0, lessons: 0, vocab: 0 });
+    }
 
     const username = (typeof AuthStore !== 'undefined' && AuthStore.getCurrentUsername()) || null;
     const displayName = username ? AuthStore.getDisplayName(username) : null;
-    const userSeed = displayName
-      ? { ...DATA.user, name: displayName, nickname: displayName.split(' ')[0] || displayName, avatar: displayName.trim().charAt(0) || DATA.user.avatar }
-      : { ...DATA.user };
+    // Real join date = this Firebase account's actual creation timestamp
+    // (cached by auth.js from user.metadata.creationTime), falling back to
+    // "today" only for the rare case it hasn't been cached yet.
+    const joinDate = (username && typeof AuthStore !== 'undefined' && AuthStore.getJoinDate(username)) || new Date().toISOString();
+
+    const userSeed = {
+      name: displayName || 'ผู้เรียนใหม่',
+      nickname: (displayName && displayName.split(' ')[0]) || displayName || 'เพื่อน',
+      avatar: (displayName && displayName.trim().charAt(0)) || '👤',
+      avatarImage: null,
+      level: DATA.levels[0],
+      streak: 0,
+      xp: 0,
+      minutesToday: 0,
+      vocabCount: 0,
+      lessonsToday: 0,
+      vocabReviewedToday: 0,
+      joinDate,
+      dailyGoalMinutes: 60,
+      weeklyGoalLessons: 5,
+      weeklyLessonsDone: 0,
+    };
 
     return {
-      version: 2,
+      version: 3,
       lastVisit: today,
       weekStart: this._weekStartKey(),
-      currentLevel: DATA.currentLevel,
+      currentLevel: DATA.levels[0],
       user: userSeed,
-      counters: { chatMessages: 0, placementTests: 0, levelsViewed: DATA.levels.length },
-      viewedLevels: [...DATA.levels],
+      counters: { chatMessages: 0, placementTests: 0, levelsViewed: 0 },
+      viewedLevels: [],
       battle: { rankPoints: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, totalBattles: 0 },
       spelling: { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 },
       activityLog,
-      monthlyStats: { ...DATA.progress.monthlyStats },
+      monthlyStats: { totalMinutes: 0, totalLessons: 0, totalVocab: 0, avgScore: 0, bestStreak: 0 },
       events: [],
     };
+  },
+
+  // One-time cleanup for accounts created before this fix, whose saved data
+  // still carries the old hardcoded demo numbers (streak 14, XP 1840, 247
+  // words, joined "2025-09-15", etc. — copied wholesale from DATA.user).
+  // Detected by that exact fake combination so real progress is never
+  // touched, then replaced with honest values / the real Firebase join date.
+  _migrateLegacyFakeSeed() {
+    const s = this._stats;
+    if (!s || s.version >= 3 || !s.user) return;
+    const u = s.user;
+    const looksFake = u.joinDate === '2025-09-15' && u.xp === 1840 && u.streak === 14;
+    if (looksFake) {
+      const username = (typeof AuthStore !== 'undefined' && AuthStore.getCurrentUsername()) || null;
+      const realJoinDate = (username && typeof AuthStore !== 'undefined' && AuthStore.getJoinDate(username)) || new Date().toISOString();
+      Object.assign(u, {
+        streak: 0,
+        xp: 0,
+        minutesToday: 0,
+        vocabCount: 0,
+        lessonsToday: 0,
+        vocabReviewedToday: 0,
+        weeklyLessonsDone: 0,
+        joinDate: realJoinDate,
+      });
+      s.monthlyStats = { totalMinutes: 0, totalLessons: 0, totalVocab: 0, avgScore: 0, bestStreak: 0 };
+      s.activityLog = s.activityLog.map(a => ({ ...a, minutes: 0, lessons: 0, vocab: 0 }));
+      s.viewedLevels = [];
+      s.counters.levelsViewed = 0;
+    }
+    s.version = 3;
   },
 
   _todayKey() { return new Date().toISOString().slice(0, 10); },
@@ -242,6 +371,9 @@ const StatsStore = {
     s.user.minutesToday += 8;
     s.monthlyStats.totalMinutes += 8;
     this.save();
+    // Push the new rank/wins/losses to the shared leaderboard right away so
+    // other players see it next time they load the board.
+    if (typeof LeaderboardStore !== 'undefined') LeaderboardStore.syncCurrentUser();
 
     return {
       won,

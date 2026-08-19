@@ -11,6 +11,15 @@
 
 const AUTH_SESSION_KEY = 'lingualearn_session_v1';
 const AUTH_DISPLAYNAMES_KEY = 'lingualearn_displaynames_v1';
+const AUTH_JOINDATES_KEY = 'lingualearn_joindates_v1';
+
+// Explicitly keep the user signed in across browser restarts/tabs (not just
+// for the current session). This is Firebase's default, but we set it
+// explicitly so login really is "continuous" and never silently degrades to
+// session-only persistence.
+firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(err => {
+  console.warn('setPersistence failed (falling back to default):', err?.message || err);
+});
 
 const AuthStore = {
   _getDisplayNames() {
@@ -28,6 +37,34 @@ const AuthStore = {
       map[uid] = displayName;
       localStorage.setItem(AUTH_DISPLAYNAMES_KEY, JSON.stringify(map));
     } catch { /* storage unavailable */ }
+  },
+
+  // The REAL date this account was created — read straight from Firebase
+  // Auth's own record (user.metadata.creationTime), not a fake seeded
+  // value. Cached locally (keyed by uid) so profile.html can show it
+  // synchronously without waiting on a network round-trip.
+  _getJoinDates() {
+    try {
+      const raw = localStorage.getItem(AUTH_JOINDATES_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  },
+
+  _saveJoinDate(uid, creationTime) {
+    if (!uid || !creationTime) return;
+    try {
+      const map = this._getJoinDates();
+      if (!map[uid]) { // never overwrite once known — creation date never changes
+        map[uid] = new Date(creationTime).toISOString();
+        localStorage.setItem(AUTH_JOINDATES_KEY, JSON.stringify(map));
+      }
+    } catch { /* storage unavailable */ }
+  },
+
+  getJoinDate(uid) {
+    return this._getJoinDates()[uid] || null;
   },
 
   _setSession(uid) {
@@ -65,6 +102,7 @@ const AuthStore = {
       const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
       await cred.user.updateProfile({ displayName });
       this._saveDisplayName(cred.user.uid, displayName);
+      this._saveJoinDate(cred.user.uid, cred.user.metadata?.creationTime);
       this._setSession(cred.user.uid);
       cred.user.sendEmailVerification?.().catch(() => { /* non-critical */ });
       return { ok: true, uid: cred.user.uid, displayName };
@@ -81,6 +119,7 @@ const AuthStore = {
       const cred = await firebase.auth().signInWithEmailAndPassword(email, password);
       const displayName = cred.user.displayName || email;
       this._saveDisplayName(cred.user.uid, displayName);
+      this._saveJoinDate(cred.user.uid, cred.user.metadata?.creationTime);
       this._setSession(cred.user.uid);
       return { ok: true, uid: cred.user.uid, displayName };
     } catch (err) {
@@ -134,6 +173,10 @@ firebase.auth().onAuthStateChanged(user => {
   }
   if (user && !AuthStore.isLoggedIn()) {
     AuthStore._saveDisplayName(user.uid, user.displayName || user.email);
+    AuthStore._saveJoinDate(user.uid, user.metadata?.creationTime);
     AuthStore._setSession(user.uid);
   }
+  // Backfill the real join date for sessions that started before this
+  // tracking existed (it's a no-op once it's already cached for this uid).
+  if (user) AuthStore._saveJoinDate(user.uid, user.metadata?.creationTime);
 });

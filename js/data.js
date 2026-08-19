@@ -1202,15 +1202,4 @@ const DATA = {
     { id: 'bot-7', name: 'Clause Dragon', avatar: '🐉', rankRP: 1250, hp: 140, accuracy: 0.75, damage: 25, level: 'C1' },
     { id: 'bot-8', name: 'Master Linguist', avatar: '🎓', rankRP: 1600, hp: 150, accuracy: 0.82, damage: 28, level: 'C2' },
   ],
-
-  rankLeaderboard: [
-    { name: 'สมชาย ใจดี', avatar: 'ส', rankRP: 1680, wins: 142 },
-    { name: 'มานี รักเรียน', avatar: 'ม', rankRP: 1540, wins: 128 },
-    { name: 'วิชัย เก่งอังกฤษ', avatar: 'ว', rankRP: 1320, wins: 115 },
-    { name: 'นภา สว่างใส', avatar: 'น', rankRP: 1180, wins: 98 },
-    { name: 'กิตติ ขยันเรียน', avatar: 'ก', rankRP: 980, wins: 87 },
-    { name: 'ปิยะ นักอ่าน', avatar: 'ป', rankRP: 820, wins: 76 },
-    { name: 'อรุณ ตะวันทอง', avatar: 'อ', rankRP: 650, wins: 64 },
-    { name: 'ธนา พูดเก่ง', avatar: 'ธ', rankRP: 480, wins: 52 },
-  ],
 };

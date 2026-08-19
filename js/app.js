@@ -124,25 +124,6 @@ function renderBattleSection() {
     `;
   }).join('');
 
-  const allPlayers = [
-    ...DATA.rankLeaderboard.map(p => ({ ...p, isYou: false })),
-    { name: DATA.user.name, avatar: getPlayerAvatarHTML(), rankRP: battle.rankPoints, wins: battle.wins, isYou: true },
-  ].sort((a, b) => b.rankRP - a.rankRP);
-
-  const lbHtml = allPlayers.map((p, i) => {
-    const pr = RankSystem.getRank(p.rankRP);
-    const cls = p.isYou ? 'you' : i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-    return `
-      <div class="rank-lb-row ${cls}">
-        <span class="lb-pos">${i + 1}</span>
-        <span>${p.avatar}</span>
-        <span>${escapeHtml(p.name)}${p.isYou ? ' (คุณ)' : ''}</span>
-        <span>${pr.icon}</span>
-        <span class="lb-rp">${p.rankRP} RP</span>
-      </div>
-    `;
-  }).join('');
-
   el.innerHTML = `
     <div class="rank-hero">
       <div class="rank-emblem" style="border-color:${rank.color};background:${rank.color}18">${rank.icon}</div>
@@ -169,7 +150,9 @@ function renderBattleSection() {
       </div>
       <div class="rank-board">
         <h3>🏆 Rank Leaderboard</h3>
-        ${lbHtml}
+        <div id="rank-leaderboard-list">
+          <p class="lb-status">กำลังโหลดอันดับ...</p>
+        </div>
       </div>
       <div class="battle-how">
         <h4>วิธีเล่น — เทิร์นเบสเรียงคำ</h4>
@@ -188,6 +171,76 @@ function renderBattleSection() {
   el.querySelectorAll('[data-start-battle]').forEach(btn => {
     btn.addEventListener('click', () => WordBattle.start(btn.dataset.startBattle));
   });
+
+  renderLeaderboardList();
+}
+
+// Fetches the REAL, shared rank leaderboard from Firestore (see
+// js/leaderboard.js) and fills in #rank-leaderboard-list. Runs async and
+// separately from renderBattleSection() so opponent cards / buttons render
+// instantly while the network request for the board is still in flight.
+async function renderLeaderboardList() {
+  const listEl = document.getElementById('rank-leaderboard-list');
+  if (!listEl) return;
+
+  if (typeof LeaderboardStore === 'undefined' || typeof firebase === 'undefined' || !firebase.firestore) {
+    listEl.innerHTML = '<p class="lb-status">ไม่สามารถโหลดอันดับได้ในขณะนี้</p>';
+    return;
+  }
+
+  const battle = StatsStore.get().battle || { rankPoints: 0, wins: 0, losses: 0 };
+  const myUid = typeof AuthStore !== 'undefined' ? AuthStore.getCurrentUsername() : null;
+
+  const others = (await LeaderboardStore.fetchTop(100)).filter(p => p.uid !== myUid);
+
+  const players = [
+    ...others,
+    {
+      uid: myUid,
+      name: DATA.user.name,
+      avatar: getPlayerAvatarHTML(),
+      avatarIsHtml: true,
+      rankRP: battle.rankPoints || 0,
+      wins: battle.wins || 0,
+      isYou: true,
+    },
+  ].sort((a, b) => b.rankRP - a.rankRP);
+
+  if (others.length === 0) {
+    listEl.innerHTML = `
+      <p class="lb-status">ยังไม่มีผู้เล่นคนอื่นขึ้นบอร์ด — ชนะการต่อสู้เพื่อขึ้นเป็นอันดับ 1!</p>
+      ${buildLbRow(players[0], 0)}
+    `;
+    return;
+  }
+
+  const TOP_N = 15;
+  const top = players.slice(0, TOP_N);
+  const myIndex = players.findIndex(p => p.isYou);
+
+  let rowsHtml = top.map((p, i) => buildLbRow(p, i)).join('');
+  if (myIndex >= TOP_N) {
+    rowsHtml += `<div class="lb-divider">⋯</div>${buildLbRow(players[myIndex], myIndex)}`;
+  }
+  listEl.innerHTML = rowsHtml;
+}
+
+function buildLbRow(p, i) {
+  const pr = RankSystem.getRank(p.rankRP);
+  const cls = p.isYou ? 'you' : i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+  // p.avatar comes straight from Firestore for every player except "you",
+  // and other players' rows can be written by other browsers — so it must
+  // always be escaped (never rendered as raw HTML) to avoid stored XSS.
+  const avatarOut = p.avatarIsHtml ? p.avatar : escapeHtml(p.avatar || '🙂');
+  return `
+    <div class="rank-lb-row ${cls}">
+      <span class="lb-pos">${i + 1}</span>
+      <span>${avatarOut}</span>
+      <span>${escapeHtml(p.name)}${p.isYou ? ' (คุณ)' : ''}</span>
+      <span>${pr.icon}</span>
+      <span class="lb-rp">${p.rankRP} RP</span>
+    </div>
+  `;
 }
 
 function renderSpellingSection() {

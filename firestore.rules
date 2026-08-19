@@ -1,0 +1,32 @@
+rules_version = '2';
+
+// วางไฟล์นี้ใน Firebase Console → Firestore Database → Rules แล้วกด "Publish"
+// (โปรเจกต์: lingualearn-c86fc)
+//
+// อธิบาย:
+//
+// leaderboard/{uid}  →  ตารางอันดับ (ทุกคนเห็นได้)
+// - อ่านได้ทุกคน (แม้ไม่ล็อกอิน) เพื่อให้ leaderboard แสดงผลได้
+// - เขียนได้เฉพาะเจ้าของบัญชี (uid ต้องตรงกับผู้ที่ล็อกอินอยู่) ป้องกันไม่ให้
+//   คนอื่นมาแก้/สวมรอยอันดับของผู้เล่นคนอื่น
+// - rankRP ต้องเป็นตัวเลขเท่านั้น กันไม่ให้ใส่ค่าประหลาดเข้ามา
+//
+// users/{uid}  →  ข้อมูล/ความคืบหน้าจริงของบัญชีนั้น (ส่วนตัว)
+// - อ่าน/เขียนได้เฉพาะเจ้าของบัญชีเท่านั้น เพื่อให้ล็อกอินจากเครื่อง/เบราว์เซอร์
+//   ไหนก็เห็นข้อมูลจริงของตัวเอง โดยที่คนอื่นดูของเราไม่ได้
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /leaderboard/{uid} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.auth.uid == uid
+                   && request.resource.data.rankRP is number
+                   && request.resource.data.rankRP >= 0;
+    }
+
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

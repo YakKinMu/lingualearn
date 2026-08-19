@@ -112,13 +112,34 @@
   font-size: 0.85rem;
 }
 
-.rank-lb-row.you { background: var(--red-bg); border: 1px solid var(--red-border); }
+.rank-lb-row.you {
+  background: rgba(59, 130, 246, 0.18);
+  border: 1px solid var(--blue);
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.2) inset;
+}
+.rank-lb-row.you span { color: var(--text); font-weight: 700; }
+.rank-lb-row.you .lb-pos { color: var(--blue); }
+.rank-lb-row.you .lb-rp { color: var(--blue); }
 .rank-lb-row.top1 { background: rgba(245, 158, 11, 0.1); }
 .rank-lb-row.top2 { background: rgba(192, 192, 192, 0.08); }
 .rank-lb-row.top3 { background: rgba(205, 127, 50, 0.08); }
 
 .lb-pos { font-weight: 700; width: 24px; color: var(--text-muted); }
 .lb-rp { margin-left: auto; font-weight: 600; color: var(--orange); }
+
+.lb-status {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.6rem 0.4rem;
+}
+.lb-divider {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  padding: 0.15rem 0;
+  letter-spacing: 0.2em;
+}
 
 .battle-how {
   grid-column: 1 / -1;
