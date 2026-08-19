@@ -676,40 +676,60 @@ function initStatsActions() {
 function initAuthPage() {
   const loginForm = document.getElementById('login-form');
   const registerForm = document.getElementById('register-form');
+  const forgotForm = document.getElementById('forgot-form');
   const errorEl = document.getElementById('auth-error');
 
   const showError = msg => { if (errorEl) errorEl.textContent = msg; };
-
-  document.getElementById('show-register')?.addEventListener('click', () => {
-    loginForm?.classList.add('hidden');
-    registerForm?.classList.remove('hidden');
+  const showOnly = form => {
+    [loginForm, registerForm, forgotForm].forEach(f => f?.classList.toggle('hidden', f !== form));
     showError('');
-  });
-  document.getElementById('show-login')?.addEventListener('click', () => {
-    registerForm?.classList.add('hidden');
-    loginForm?.classList.remove('hidden');
-    showError('');
-  });
+  };
 
-  loginForm?.addEventListener('submit', e => {
+  document.getElementById('show-register')?.addEventListener('click', () => showOnly(registerForm));
+  document.getElementById('show-login')?.addEventListener('click', () => showOnly(loginForm));
+  document.getElementById('show-forgot')?.addEventListener('click', () => showOnly(forgotForm));
+  document.getElementById('show-login-from-forgot')?.addEventListener('click', () => showOnly(loginForm));
+
+  const setFormBusy = (form, busy) => {
+    form?.querySelectorAll('button, input').forEach(el => { el.disabled = busy; });
+  };
+
+  loginForm?.addEventListener('submit', async e => {
     e.preventDefault();
-    const username = document.getElementById('login-username')?.value || '';
+    const email = document.getElementById('login-email')?.value || '';
     const password = document.getElementById('login-password')?.value || '';
-    const res = AuthStore.login(username, password);
+    showError('');
+    setFormBusy(loginForm, true);
+    const res = await AuthStore.login(email, password);
+    setFormBusy(loginForm, false);
     if (!res.ok) { showError(res.error); return; }
     window.location.href = 'index.html';
   });
 
-  registerForm?.addEventListener('submit', e => {
+  registerForm?.addEventListener('submit', async e => {
     e.preventDefault();
     const displayName = document.getElementById('register-displayname')?.value || '';
-    const username = document.getElementById('register-username')?.value || '';
+    const email = document.getElementById('register-email')?.value || '';
     const password = document.getElementById('register-password')?.value || '';
     const confirm = document.getElementById('register-confirm')?.value || '';
     if (password !== confirm) { showError('รหัสผ่านไม่ตรงกัน'); return; }
-    const res = AuthStore.register(username, password, displayName);
+    showError('');
+    setFormBusy(registerForm, true);
+    const res = await AuthStore.register(email, password, displayName);
+    setFormBusy(registerForm, false);
     if (!res.ok) { showError(res.error); return; }
     window.location.href = 'index.html';
+  });
+
+  forgotForm?.addEventListener('submit', async e => {
+    e.preventDefault();
+    const email = document.getElementById('forgot-email')?.value || '';
+    showError('');
+    setFormBusy(forgotForm, true);
+    const res = await AuthStore.forgotPassword(email);
+    setFormBusy(forgotForm, false);
+    if (!res.ok) { showError(res.error); return; }
+    showError('ส่งลิงก์รีเซ็ตรหัสผ่านไปที่อีเมลแล้ว กรุณาตรวจสอบกล่องจดหมาย');
   });
 }
 
@@ -856,8 +876,7 @@ function initProfileEdit() {
     }
     if (e.target.id === 'profile-logout-btn') {
       if (confirm('ต้องการออกจากระบบใช่ไหม?')) {
-        AuthStore.logout();
-        window.location.href = 'login.html';
+        AuthStore.logout().then(() => { window.location.href = 'login.html'; });
       }
     }
   });

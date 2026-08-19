@@ -21,29 +21,41 @@
       <p class="auth-error" id="auth-error"></p>
 
       <form id="login-form" class="auth-form">
-        <label for="login-username">ชื่อผู้ใช้</label>
-        <input type="text" id="login-username" required autocomplete="username" />
+        <label for="login-email">อีเมล</label>
+        <input type="email" id="login-email" required autocomplete="email" />
         <label for="login-password">รหัสผ่าน</label>
         <input type="password" id="login-password" required autocomplete="current-password" />
         <button type="submit" class="btn btn-primary">เข้าสู่ระบบ</button>
+        <p class="auth-switch"><button type="button" id="show-forgot" class="auth-link">ลืมรหัสผ่าน?</button></p>
         <p class="auth-switch">ยังไม่มีบัญชี? <button type="button" id="show-register" class="auth-link">สมัครสมาชิก</button></p>
       </form>
 
       <form id="register-form" class="auth-form hidden">
         <label for="register-displayname">ชื่อที่แสดง</label>
         <input type="text" id="register-displayname" required maxlength="60" />
-        <label for="register-username">ชื่อผู้ใช้ (ภาษาอังกฤษ/ตัวเลข)</label>
-        <input type="text" id="register-username" required maxlength="30" autocomplete="username" />
-        <label for="register-password">รหัสผ่าน (อย่างน้อย 4 ตัว)</label>
-        <input type="password" id="register-password" required minlength="4" autocomplete="new-password" />
+        <label for="register-email">อีเมล</label>
+        <input type="email" id="register-email" required autocomplete="email" />
+        <label for="register-password">รหัสผ่าน (อย่างน้อย 6 ตัว)</label>
+        <input type="password" id="register-password" required minlength="6" autocomplete="new-password" />
         <label for="register-confirm">ยืนยันรหัสผ่าน</label>
-        <input type="password" id="register-confirm" required minlength="4" autocomplete="new-password" />
+        <input type="password" id="register-confirm" required minlength="6" autocomplete="new-password" />
         <button type="submit" class="btn btn-primary">สมัครสมาชิก</button>
         <p class="auth-switch">มีบัญชีอยู่แล้ว? <button type="button" id="show-login" class="auth-link">เข้าสู่ระบบ</button></p>
+      </form>
+
+      <form id="forgot-form" class="auth-form hidden">
+        <p class="auth-sub" style="margin-top:0">กรอกอีเมลที่ใช้สมัคร ระบบจะส่งลิงก์สำหรับตั้งรหัสผ่านใหม่ให้</p>
+        <label for="forgot-email">อีเมล</label>
+        <input type="email" id="forgot-email" required autocomplete="email" />
+        <button type="submit" class="btn btn-primary">ส่งลิงก์รีเซ็ตรหัสผ่าน</button>
+        <p class="auth-switch"><button type="button" id="show-login-from-forgot" class="auth-link">กลับไปหน้าเข้าสู่ระบบ</button></p>
       </form>
     </div>
   </div>
 
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
   <script src="js/data.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/stats-store.js"></script>
