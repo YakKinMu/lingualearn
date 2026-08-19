@@ -694,6 +694,13 @@ function initAuthPage() {
     form?.querySelectorAll('button, input').forEach(el => { el.disabled = busy; });
   };
 
+  // Clear any stale error message as soon as the person edits a field again,
+  // so an old error from a previous (incomplete) attempt doesn't linger on
+  // screen and look like it applies to what's currently typed.
+  [loginForm, registerForm, forgotForm].forEach(form => {
+    form?.addEventListener('input', () => showError(''));
+  });
+
   loginForm?.addEventListener('submit', async e => {
     e.preventDefault();
     const email = document.getElementById('login-email')?.value || '';
