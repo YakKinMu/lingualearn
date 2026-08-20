@@ -451,7 +451,9 @@ function updateVocabTable() {
   if (search) items = items.filter(v =>
     v.word.toLowerCase().includes(search) ||
     v.meaning.includes(search) ||
-    v.example.toLowerCase().includes(search)
+    v.example.toLowerCase().includes(search) ||
+    (v.phonetic || '').toLowerCase().includes(search) ||
+    (v.thaiReading || '').includes(search)
   );
 
   const countEl = document.getElementById('vocab-result-count');
@@ -466,7 +468,7 @@ function updateVocabTable() {
 
   if (items.length === 0) {
     tbody.innerHTML = `
-      <tr><td colspan="4">
+      <tr><td colspan="6">
         <div class="table-empty-state">
           <span class="empty-icon">🔍</span>
           <strong>ไม่พบคำศัพท์ที่ตรงกับการค้นหา</strong>
@@ -480,11 +482,13 @@ function updateVocabTable() {
   tbody.innerHTML = items.map(v => `
     <tr>
       <td><strong>${escapeHtml(v.word)}</strong></td>
+      <td class="phonetic-cell">${escapeHtml(v.phonetic || '-')}</td>
+      <td class="thai-reading-cell">${escapeHtml(v.thaiReading || '-')}</td>
       <td>${escapeHtml(v.meaning)}</td>
       <td class="example-cell"><em>${escapeHtml(v.example)}</em></td>
       <td><span class="level-tag" style="background:${DATA.levelContent[v.level].color}22;color:${DATA.levelContent[v.level].color}">${v.level}</span></td>
     </tr>
-  `).join('') || '<tr><td colspan="4" class="empty">ไม่พบคำศัพท์</td></tr>';
+  `).join('') || '<tr><td colspan="6" class="empty">ไม่พบคำศัพท์</td></tr>';
 }
 
 function renderProgress() {
@@ -810,6 +814,7 @@ function renderProfile() {
     : escapeHtml(u.avatar);
 
   card.innerHTML = `
+    <div class="profile-cover"></div>
     <div class="profile-identity">
       <div class="profile-avatar-wrap">
         <div class="profile-avatar-lg" id="profile-avatar-lg">${avatarInner}</div>
@@ -822,6 +827,10 @@ function renderProfile() {
         <div class="profile-badges">
           <span class="rank-tier-chip active" style="color:${rank.color};border-color:${rank.color}">${rank.icon} ${rank.labelTh}</span>
           <span class="streak-badge">🔥 ${u.streak} วัน</span>
+        </div>
+        <div class="profile-xp-highlight">
+          <span class="profile-xp-number">${u.xp.toLocaleString()}</span>
+          <span class="profile-xp-label">XP สะสม</span>
         </div>
         <p class="profile-joined">สมาชิกตั้งแต่ ${joinedLabel} • ${daysSince} วันที่แล้ว</p>
         ${u.avatarImage ? '<button type="button" class="auth-link" id="profile-avatar-remove">ลบรูป ใช้ตัวอักษรแทน</button>' : ''}

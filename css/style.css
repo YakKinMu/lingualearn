@@ -1620,6 +1620,8 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
 
 .data-table tr:hover td { background: rgba(255,255,255,0.02); }
 .example-cell { color: var(--text-muted); font-size: 0.85rem; }
+.phonetic-cell { color: var(--accent, #8b8bff); font-family: 'Times New Roman', 'Doulos SIL', serif; font-style: italic; white-space: nowrap; }
+.thai-reading-cell { color: var(--text-muted); font-size: 0.85rem; white-space: nowrap; }
 .level-tag {
   display: inline-block;
   padding: 0.2rem 0.5rem;
@@ -1647,7 +1649,27 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
   font-family: var(--font);
 }
 
-.vocab-table-wrap { overflow-x: auto; }
+.vocab-table-wrap {
+  overflow-x: auto;
+  background: rgba(15, 17, 23, 0.94);
+  backdrop-filter: blur(6px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.vocab-table-wrap .data-table { font-size: 0.9rem; }
+.vocab-table-wrap .data-table th {
+  background: var(--bg-elevated);
+  position: sticky;
+  top: 0;
+}
+.vocab-table-wrap .data-table th:first-child { border-top-left-radius: var(--radius-lg); }
+.vocab-table-wrap .data-table th:last-child { border-top-right-radius: var(--radius-lg); }
+.vocab-table-wrap .data-table tr:last-child td { border-bottom: none; }
+.vocab-table-wrap .data-table tbody tr:nth-child(even) td { background: rgba(255, 255, 255, 0.035); }
+.vocab-table-wrap .data-table tbody tr:hover td { background: rgba(255, 255, 255, 0.07); }
+.vocab-table-wrap .data-table td:first-child { font-weight: 700; color: var(--text); }
 
 .placement-q { font-size: 1.1rem; font-weight: 600; margin: 1rem 0; }
 
@@ -1721,41 +1743,70 @@ select:focus-visible,
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 0 1.5rem 1.5rem;
   margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+/* Cover strip across the top of the card — the avatar overlaps its bottom
+   edge, matching a classic "cover photo + centered profile picture" layout. */
+.profile-cover {
+  height: 96px;
+  margin: 0 -1.5rem 0;
+  background: linear-gradient(135deg, var(--red) 0%, #7c2d12 55%, var(--bg-elevated) 100%);
 }
 
 .profile-identity {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 1.25rem;
-  flex-wrap: wrap;
+  text-align: center;
+  gap: 0.4rem;
+}
+
+.profile-avatar-wrap {
+  margin-top: -52px;
+  margin-bottom: 0.25rem;
 }
 
 .profile-avatar-lg {
-  width: 80px;
-  height: 80px;
+  width: 108px;
+  height: 108px;
   border-radius: 50%;
   background: linear-gradient(135deg, var(--green), var(--blue));
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
   flex-shrink: 0;
+  border: 4px solid var(--bg-card);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4);
 }
 
-.profile-identity-info { flex: 1; min-width: 200px; }
+.profile-identity-info { width: 100%; max-width: 420px; }
 .profile-identity-info h3 { font-size: 1.3rem; margin-bottom: 0.2rem; }
 .profile-nickname { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.6rem; }
 
 .profile-badges {
   display: flex;
+  justify-content: center;
   gap: 0.5rem;
   flex-wrap: wrap;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.5rem;
 }
+
+/* The big, prominent stat number below the avatar/name (per the requested
+   layout) — the headline "how much progress have I made" figure. */
+.profile-xp-highlight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0.3rem 0 0.7rem;
+}
+.profile-xp-number { font-size: 2.3rem; font-weight: 800; color: var(--orange); line-height: 1; }
+.profile-xp-label { font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem; }
 
 .profile-joined { color: var(--text-muted); font-size: 0.8rem; }
 
@@ -1766,6 +1817,8 @@ select:focus-visible,
   display: grid;
   gap: 0.5rem;
   max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .profile-edit-form.hidden { display: none; }
@@ -1789,12 +1842,15 @@ select:focus-visible,
   display: flex;
   gap: 0.6rem;
   margin-top: 0.5rem;
+  justify-content: center;
 }
 
 .profile-actions {
   display: flex;
+  justify-content: center;
   gap: 0.6rem;
   flex-wrap: wrap;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 768px) {
@@ -1837,15 +1893,15 @@ select:focus-visible,
 
 .profile-avatar-edit-btn {
   position: absolute;
-  bottom: -2px;
-  right: -2px;
-  width: 28px;
-  height: 28px;
+  bottom: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   background: var(--green);
   color: white;
   border: 2px solid var(--bg-card);
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   cursor: pointer;
   display: flex;
   align-items: center;
