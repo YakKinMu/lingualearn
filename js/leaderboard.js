@@ -3,9 +3,10 @@
    shared across every signed-in player, via a single Firestore collection:
 
      leaderboard/{uid} = {
-       name: string,        // display name shown on the board
-       avatar: string,      // 1-2 char avatar text (emoji or initial)
-       rankRP: number,      // current Word Battle rank points
+       name: string,          // display name shown on the board
+       avatar: string,        // 1-2 char avatar text (emoji or initial) — fallback when there's no photo
+       avatarImage: string|null, // uploaded profile photo as a small JPEG data URL, or null
+       rankRP: number,        // current Word Battle rank points
        wins: number,
        losses: number,
        bestStreak: number,
@@ -66,10 +67,17 @@ const LeaderboardStore = {
       const displayName = (typeof AuthStore !== 'undefined' && AuthStore.getDisplayName(uid))
         || stats.user?.name || 'ผู้เล่น';
       const avatarSrc = stats.user?.avatar || displayName.trim().charAt(0) || '🙂';
+      // The uploaded profile photo (already resized to 240x240 JPEG by
+      // resizeImageToDataURL in app.js, so it's small enough — a few dozen
+      // KB — to safely fit in a Firestore document) needs to be part of the
+      // SHARED leaderboard doc too, not just each user's own private
+      // users/{uid} record, or nobody else will ever see it.
+      const avatarImage = typeof stats.user?.avatarImage === 'string' ? stats.user.avatarImage : null;
 
       await db.collection('leaderboard').doc(uid).set({
         name: String(displayName).slice(0, 40),
         avatar: String(avatarSrc).slice(0, 2),
+        avatarImage,
         rankRP: Math.max(0, Math.round(battle.rankPoints || 0)),
         wins: battle.wins || 0,
         losses: battle.losses || 0,
@@ -96,6 +104,7 @@ const LeaderboardStore = {
           uid: doc.id,
           name: typeof d.name === 'string' && d.name ? d.name : 'ผู้เล่น',
           avatar: typeof d.avatar === 'string' && d.avatar ? d.avatar : '🙂',
+          avatarImage: typeof d.avatarImage === 'string' && d.avatarImage ? d.avatarImage : null,
           rankRP: typeof d.rankRP === 'number' ? d.rankRP : 0,
           wins: typeof d.wins === 'number' ? d.wins : 0,
           losses: typeof d.losses === 'number' ? d.losses : 0,

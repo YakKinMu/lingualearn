@@ -289,10 +289,18 @@ async function renderLeaderboardList() {
 }
 
 // A player's avatar, styled as the same circular "profile" badge used
-// everywhere else in the app (navbar, profile page) — an image if they have
-// one, otherwise their emoji/initial on a gradient circle. Never raw text.
+// everywhere else in the app (navbar, profile page) — their uploaded photo
+// if they have one (now synced into the shared leaderboard doc, see
+// leaderboard.js), otherwise their emoji/initial on a gradient circle.
 function lbAvatarBadge(p, extraClass) {
-  const inner = p.avatarIsHtml ? p.avatar : escapeHtml(p.avatar || '🙂');
+  let inner;
+  if (p.avatarIsHtml) {
+    inner = p.avatar; // "you" — already-built <img>/emoji HTML from getPlayerAvatarHTML()
+  } else if (p.avatarImage) {
+    inner = `<img src="${p.avatarImage}" alt="${escapeHtml(p.name || '')}" />`;
+  } else {
+    inner = escapeHtml(p.avatar || '🙂');
+  }
   return `<span class="lb-avatar-badge${extraClass ? ' ' + extraClass : ''}">${inner}</span>`;
 }
 
