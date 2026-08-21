@@ -1173,6 +1173,60 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
 .modal-content h2 { margin-bottom: 0.5rem; }
 .modal-content > p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem; }
 
+/* ===== Onboarding welcome (forced full-page takeover after signup) ===== */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.onboarding-overlay.hidden { display: none; }
+
+body.onboarding-active { overflow: hidden; }
+
+.placement-step {
+  max-width: 600px;
+  text-align: left;
+}
+
+.placement-step h2,
+.placement-step > .onboarding-text {
+  text-align: center;
+}
+
+.placement-step .modal-progress { margin-top: 1.5rem; }
+
+.onboarding-step.hidden { display: none; }
+
+.onboarding-step {
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.onboarding-emoji { font-size: 4rem; margin-bottom: 1rem; }
+
+.onboarding-step h2 { font-size: 1.8rem; margin-bottom: 0.75rem; }
+
+.onboarding-text {
+  color: var(--text-muted);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  margin-bottom: 2rem !important;
+}
+
+.onboarding-step .btn {
+  width: 100%;
+  padding: 0.9rem 1.4rem;
+  font-size: 1rem;
+}
+
 .modal-question { margin-bottom: 1.5rem; }
 .modal-progress {
   display: flex;
@@ -1209,6 +1263,10 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
 }
 
 @media (max-width: 768px) {
+  .navbar { padding: 0.65rem 1rem; gap: 0.5rem; }
+  .nav-brand { font-size: 1.05rem; }
+  .brand-icon { font-size: 1.2rem; }
+
   .nav-links { display: none; }
   .nav-links.open {
     display: flex;
@@ -1220,8 +1278,11 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
     background: var(--bg-card);
     padding: 1rem;
     border-bottom: 1px solid var(--border);
+    z-index: 150;
   }
   .nav-toggle { display: block; }
+
+  .streak-badge { display: none; }
 
   .hero {
     flex-direction: column;
@@ -1242,6 +1303,26 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
   .courses-row { grid-template-columns: 1fr; }
 
   .chatbot-widget { width: calc(100% - 2rem); right: 1rem; left: 1rem; }
+
+  .content-section { padding: 2rem 1.25rem; }
+  .modal-content { padding: 1.5rem; }
+  .rank-hero { padding: 1.25rem 1.5rem; }
+  .practice-tabs { flex-wrap: wrap; }
+}
+
+@media (max-width: 420px) {
+  .navbar { padding: 0.6rem 0.75rem; }
+  .brand-name { display: none; }
+  .streak-badge, .user-level-badge { padding: 0.25rem 0.55rem; font-size: 0.72rem; }
+  .user-avatar { width: 28px; height: 28px; }
+
+  .hero-compact, .hero { padding: 2rem 1.25rem; }
+  .hero h1 { font-size: 1.6rem; }
+  .hero-desc { font-size: 0.95rem; }
+
+  .content-section { padding: 1.5rem 1rem; }
+  .rank-emblem { width: 64px; height: 64px; font-size: 1.8rem; }
+  .fighter-avatar { width: 44px; height: 44px; font-size: 1.4rem; }
 }
 
 .hidden { display: none !important; }
@@ -1531,6 +1612,9 @@ a.nav-user.active .user-avatar { box-shadow: 0 0 0 2px var(--green); }
 
 #ldata-vocabulary.active,
 #ldata-phrases.active { display: block; }
+
+#ldata-vocabulary.active { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+#ldata-vocabulary .data-table { min-width: 560px; }
 
 /* Data cards */
 .data-card {
@@ -1991,3 +2075,157 @@ body.auth-body {
 }
 
 .auth-link:hover { text-decoration: underline; }
+
+/* ===== Daily Challenge ===== */
+
+.nav-challenge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.nav-challenge.active,
+.nav-challenge:hover {
+  background: var(--orange-bg);
+  color: var(--orange);
+  border-radius: 8px;
+}
+
+.challenge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 0 2px var(--bg-card);
+}
+
+.challenge-dot.hidden { display: none; }
+
+/* Floating popup trigger — bottom-right, above the chatbot FAB so the two
+   don't overlap on pages that have both. */
+.challenge-fab {
+  position: fixed;
+  bottom: 6.5rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--orange), #b45309);
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 200;
+  transition: transform 0.2s;
+}
+
+.challenge-fab:hover { transform: scale(1.1); }
+.challenge-fab.hidden { display: none; }
+
+.challenge-fab .challenge-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 12px;
+  height: 12px;
+}
+
+@media (max-width: 768px) {
+  .challenge-fab { bottom: 6rem; right: 1.25rem; width: 48px; height: 48px; font-size: 1.25rem; }
+}
+
+.challenge-word {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 0.2rem;
+}
+
+.challenge-phonetic {
+  text-align: center;
+  color: var(--accent, #8b8bff);
+  font-family: 'Times New Roman', 'Doulos SIL', serif;
+  font-style: italic;
+  margin-bottom: 0.75rem;
+}
+
+#daily-challenge-modal .placement-q { text-align: center; }
+
+.challenge-feedback {
+  margin-top: 0.85rem;
+  font-size: 0.88rem;
+  min-height: 1.4em;
+  text-align: center;
+}
+
+.challenge-feedback.good { color: var(--green); }
+.challenge-feedback.bad { color: var(--red); }
+
+.challenge-result { text-align: center; }
+
+.challenge-result-score {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--orange);
+  margin-bottom: 0.25rem;
+}
+
+.challenge-result-detail {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.challenge-xp-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.challenge-result-total {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--green);
+  margin: 0.5rem 0 1rem;
+}
+
+.challenge-come-back {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+}
+
+.levelup-tag {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.levelup-promo {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.levelup-prompt {
+  margin-top: 1rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: var(--orange-bg);
+  border: 1px solid var(--orange);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.levelup-prompt p { margin: 0; font-size: 0.9rem; color: var(--text-muted); }
+.levelup-prompt strong { color: var(--orange); }

@@ -67,6 +67,12 @@ const StatsStore = {
     if (!this._stats.spelling) {
       this._stats.spelling = { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 };
     }
+    if (!this._stats.dailyChallenge) {
+      this._stats.dailyChallenge = { lastCompletedDate: null, totalCompleted: 0, bestScore: 0, lastXpGain: 0 };
+    }
+    if (!this._stats.levelUpTests) {
+      this._stats.levelUpTests = { attempts: 0, passedCount: 0, lastResult: null };
+    }
     this.save({ skipCloud: true });
     this._syncToData();
     // Make sure this player has an up-to-date row on the shared Firestore
@@ -222,6 +228,8 @@ const StatsStore = {
       viewedLevels: [],
       battle: { rankPoints: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, totalBattles: 0 },
       spelling: { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 },
+      dailyChallenge: { lastCompletedDate: null, totalCompleted: 0, bestScore: 0, lastXpGain: 0 },
+      levelUpTests: { attempts: 0, passedCount: 0, lastResult: null },
       activityLog,
       monthlyStats: { totalMinutes: 0, totalLessons: 0, totalVocab: 0, avgScore: 0, bestStreak: 0 },
       events: [],
@@ -407,6 +415,88 @@ const StatsStore = {
     this.save();
 
     return { xpGain, spelling: sp };
+  },
+
+  // ===== Daily Challenge =====
+  // Rewards riding on top of the existing daily-activity streak (user.streak):
+  // the bonus scales with however many consecutive days the learner has
+  // already kept up, so a long streak makes today's challenge worth more —
+  // and completing it counts as today's activity, which is what keeps that
+  // same streak alive for tomorrow.
+  isDailyChallengeDoneToday() {
+    const dc = this._stats.dailyChallenge;
+    return !!dc && dc.lastCompletedDate === this._todayKey();
+  },
+
+  recordDailyChallenge(result) {
+    const s = this._stats;
+    const u = s.user;
+    const today = this._todayKey();
+    const dc = s.dailyChallenge;
+
+    if (dc.lastCompletedDate === today) {
+      return { alreadyDone: true, xpGain: 0 };
+    }
+
+    const { correct, total } = result;
+    const streakBonus = Math.min(u.streak, 20) * 2;
+    const perfectBonus = total > 0 && correct === total ? 15 : 0;
+    const xpGain = correct * 8 + streakBonus + perfectBonus;
+
+    u.xp += xpGain;
+    dc.lastCompletedDate = today;
+    dc.totalCompleted += 1;
+    dc.lastXpGain = xpGain;
+    if (correct > dc.bestScore) dc.bestScore = correct;
+
+    const todayActivity = this._getTodayActivity();
+    todayActivity.minutes += 5;
+    todayActivity.lessons += 1;
+    u.minutesToday += 5;
+    u.lessonsToday = (u.lessonsToday || 0) + 1;
+    s.monthlyStats.totalMinutes += 5;
+    s.monthlyStats.totalLessons += 1;
+
+    this.save();
+
+    return { alreadyDone: false, xpGain, streakBonus, perfectBonus, correct, total, streak: u.streak };
+  },
+
+  // ===== Level-Up Test =====
+  // A focused exam on the learner's CURRENT level (not a generic re-placement
+  // test) — passing advances DATA.currentLevel / user.level to the next
+  // CEFR step. Failing just records the attempt so profile stats can show
+  // how many tries it took.
+  recordLevelUp({ fromLevel, toLevel, passed, correct, total }) {
+    const s = this._stats;
+    const u = s.user;
+    if (!s.levelUpTests) s.levelUpTests = { attempts: 0, passedCount: 0, lastResult: null };
+    const lt = s.levelUpTests;
+
+    lt.attempts += 1;
+    lt.lastResult = { fromLevel, toLevel, passed, correct, total, date: this._todayKey() };
+
+    const xpGain = passed ? 100 : 20;
+    u.xp += xpGain;
+
+    if (passed) {
+      lt.passedCount += 1;
+      s.currentLevel = toLevel;
+      u.level = toLevel;
+    }
+
+    const todayActivity = this._getTodayActivity();
+    todayActivity.minutes += 10;
+    todayActivity.lessons += 1;
+    u.minutesToday += 10;
+    u.lessonsToday = (u.lessonsToday || 0) + 1;
+    s.monthlyStats.totalMinutes += 10;
+    s.monthlyStats.totalLessons += 1;
+
+    this.save();
+    this._syncToData();
+
+    return { xpGain, passed };
   },
 
   _buildWeeklyActivity() {

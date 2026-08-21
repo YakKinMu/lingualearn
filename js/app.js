@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderLevelContent(activeLevel);
     initDataTabs();
     initModal();
+    initOnboarding();
   }
   if (PAGE === 'vocab') {
     renderAllVocabulary();
@@ -67,6 +68,10 @@ function renderAll() {
   if (PAGE === 'spelling') renderSpellingSection();
   if (PAGE === 'progress') renderProgress();
   if (PAGE === 'profile') { renderProfile(); renderProfileStats(); }
+  // Cloud data (the real source of truth) can finish loading a moment
+  // after the page first paints — keep the daily-challenge fab/dot in
+  // sync with it too, not just with the local-cache snapshot.
+  if (typeof DailyChallenge !== 'undefined') DailyChallenge._updateDot();
 }
 
 function refreshUI() {
@@ -321,6 +326,10 @@ function renderLevelContent(level) {
 
   const overview = document.getElementById('level-overview');
   if (overview) {
+    const isCurrent = level === DATA.currentLevel;
+    const isMax = typeof LevelUpTest !== 'undefined' && LevelUpTest.isMaxLevel(level);
+    const nextLv = typeof LevelUpTest !== 'undefined' ? LevelUpTest.nextLevel(level) : null;
+
     overview.innerHTML = `
       <div class="overview-card" style="--lv-color:${c.color}">
         <div class="overview-badge">${level}</div>
@@ -331,9 +340,28 @@ function renderLevelContent(level) {
             <strong>ทำอะไรได้บ้าง:</strong>
             <ul>${c.canDo.map(item => `<li>${escapeHtml(item)}</li>`).join('')}</ul>
           </div>
+          ${isCurrent && !isMax ? `
+            <div class="levelup-prompt">
+              <p>พร้อมเลื่อนจาก <strong>${level}</strong> ไป <strong>${nextLv}</strong> หรือยัง?</p>
+              <button class="btn btn-primary btn-sm" data-action="level-up-test">🎓 ทดสอบเลื่อนระดับ</button>
+            </div>
+          ` : ''}
+          ${isCurrent && isMax ? `
+            <div class="levelup-prompt">
+              <p>🏆 คุณอยู่ระดับสูงสุด (C2) แล้ว เก่งมาก!</p>
+            </div>
+          ` : ''}
         </div>
       </div>
     `;
+
+    if (isCurrent && !isMax) {
+      overview.querySelectorAll('[data-action="level-up-test"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (typeof LevelUpTest !== 'undefined') LevelUpTest.open();
+        });
+      });
+    }
   }
 
   renderGrammar(c.grammar);
@@ -674,12 +702,17 @@ function initModal() {
       <h3>ผลการทดสอบ</h3>
       <p>ตอบถูก <strong>${correct}/30</strong> (${pct}%)</p>
       <p>ระดับที่แนะนำ: <strong class="highlight">${level}</strong></p>
-      <button class="btn btn-primary btn-sm" data-close-modal>ปิด</button>
+      <button class="btn btn-primary btn-sm" id="placement-close">ปิด</button>
     `;
     DATA.currentLevel = level;
     activeLevel = level;
     StatsStore.record('placement', { level });
     renderAll();
+
+    document.getElementById('placement-close')?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+      document.body.classList.remove('onboarding-active');
+    });
   }
 
   document.querySelectorAll('[data-action="placement-test"]').forEach(btn => {
@@ -687,12 +720,42 @@ function initModal() {
       placementIndex = 0;
       placementAnswers = [];
       modal?.classList.remove('hidden');
+      document.body.classList.add('onboarding-active');
       renderQ();
     });
   });
+}
 
-  modal?.addEventListener('click', e => {
-    if (e.target === modal || e.target.closest('[data-close-modal]')) modal.classList.add('hidden');
+// Runs once, right after a brand-new account lands on index.html for the
+// first time (flag set by the register handler in initAuthPage()). It's a
+// forced full-page takeover — no skip, no close-by-clicking-outside — that
+// walks the new user through a two-step welcome, then hands off straight
+// into the existing placement-test modal so their level gets measured
+// before they can do anything else.
+function initOnboarding() {
+  const overlay = document.getElementById('onboarding-modal');
+  if (!overlay) return;
+
+  let justRegistered = false;
+  try { justRegistered = sessionStorage.getItem('lingualearn_just_registered') === '1'; } catch { /* storage unavailable */ }
+  if (!justRegistered) return;
+  try { sessionStorage.removeItem('lingualearn_just_registered'); } catch { /* storage unavailable */ }
+
+  const step1 = document.getElementById('onboarding-step-1');
+  const step2 = document.getElementById('onboarding-step-2');
+
+  overlay.classList.remove('hidden');
+  document.body.classList.add('onboarding-active');
+
+  document.getElementById('onboarding-next')?.addEventListener('click', () => {
+    step1?.classList.add('hidden');
+    step2?.classList.remove('hidden');
+  });
+
+  document.getElementById('onboarding-start-test')?.addEventListener('click', () => {
+    overlay.classList.add('hidden');
+    document.body.classList.remove('onboarding-active');
+    document.querySelector('[data-action="placement-test"]')?.click();
   });
 }
 
@@ -782,6 +845,7 @@ function initAuthPage() {
     const res = await AuthStore.register(email, password, displayName);
     setFormBusy(registerForm, false);
     if (!res.ok) { showError(res.error); return; }
+    try { sessionStorage.setItem('lingualearn_just_registered', '1'); } catch { /* storage unavailable */ }
     window.location.href = 'index.html';
   });
 
@@ -859,6 +923,7 @@ function renderProfileStats() {
   const u = DATA.user;
   const battle = StatsStore.get().battle || {};
   const spelling = StatsStore.get().spelling || { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 };
+  const dailyChallenge = StatsStore.get().dailyChallenge || { totalCompleted: 0, bestScore: 0, lastCompletedDate: null };
   const rank = RankSystem.getRank(battle.rankPoints || 0);
   const weeklyPct = Math.min(100, Math.round((u.weeklyLessonsDone / u.weeklyGoalLessons) * 100));
   const spellAnswered = spelling.totalCorrect + spelling.totalWrong;
@@ -890,6 +955,14 @@ function renderProfileStats() {
         <span>เล่นแล้ว: <strong>${spelling.gamesPlayed} ครั้ง</strong></span>
         <span>ความแม่นยำ: <strong>${spellAccuracy}%</strong></span>
         <span>สตรีคสูงสุด: <strong>${spelling.bestStreak}</strong></span>
+      </div>
+    </div>
+    <div class="dashboard-card">
+      <h3>🎯 ท้าประจำวัน</h3>
+      <div class="stats-detail">
+        <span>วันนี้: <strong>${typeof StatsStore.isDailyChallengeDoneToday === 'function' && StatsStore.isDailyChallengeDoneToday() ? 'ทำแล้ว ✅' : 'ยังไม่ทำ'}</strong></span>
+        <span>ทำไปแล้ว: <strong>${dailyChallenge.totalCompleted} ครั้ง</strong></span>
+        <span>คะแนนสูงสุด: <strong>${dailyChallenge.bestScore}/5</strong></span>
       </div>
     </div>
     <div class="dashboard-card">

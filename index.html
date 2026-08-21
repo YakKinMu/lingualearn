@@ -36,6 +36,7 @@
       <div class="hero-actions">
         <a href="battle.html" class="btn btn-primary">⚔️ Word Battle</a>
         <button class="btn btn-outline" data-action="placement-test">วัดระดับของฉัน</button>
+        <button class="btn btn-outline" data-action="level-up-test">🎓 ทดสอบเลื่อนระดับ</button>
         <a href="vocab.html" class="btn btn-outline">ดูคำศัพท์รวม</a>
       </div>
     </div>
@@ -77,15 +78,60 @@
     </div>
   </div>
 
-  <div class="modal hidden" id="placement-modal">
-    <div class="modal-content">
-      <button class="modal-close" data-close-modal>✕</button>
+  <button class="challenge-fab hidden" id="daily-challenge-fab" data-action="daily-challenge" title="ท้าประจำวัน">
+    🎯
+    <span class="challenge-dot hidden"></span>
+  </button>
+
+  <div class="onboarding-overlay hidden" id="onboarding-modal">
+    <div class="onboarding-step" id="onboarding-step-1">
+      <p class="onboarding-emoji">👋</p>
+      <h2>ยินดีต้อนรับสู่ LinguaLearn</h2>
+      <p class="onboarding-text">พร้อมที่จะเรียนภาษาอังกฤษแบบเด็กยุคใหม่ ไปกันเลยยยยยย!</p>
+      <button class="btn btn-primary" id="onboarding-next">ไปกันเลย! →</button>
+    </div>
+    <div class="onboarding-step hidden" id="onboarding-step-2">
+      <p class="onboarding-emoji">🎯</p>
+      <h2>มาวัดระดับกันก่อน</h2>
+      <p class="onboarding-text">เดี๋ยวเรามาวัดระดับกันก่อน จะได้รู้ว่าคุณต้องฝึกจากระดับไหน</p>
+      <button class="btn btn-primary" id="onboarding-start-test">📝 เริ่มทำแบบทดสอบ</button>
+    </div>
+  </div>
+
+  <div class="onboarding-overlay hidden" id="placement-modal">
+    <div class="onboarding-step placement-step">
       <h2>วัดระดับภาษาอังกฤษ</h2>
-      <p id="placement-desc">แบบทดสอบ 30 ข้อ</p>
+      <p id="placement-desc" class="onboarding-text">แบบทดสอบ 30 ข้อ</p>
       <div class="modal-question" id="placement-body"></div>
       <div class="modal-progress">
         <div class="progress-bar"><span id="placement-bar" style="width: 3%"></span></div>
         <span id="placement-label">1 / 30</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="daily-challenge-modal">
+    <div class="modal-content">
+      <button class="modal-close" data-close-modal>✕</button>
+      <h2>🎯 ท้าประจำวัน</h2>
+      <p id="challenge-desc">คำศัพท์ 5 ข้อ เปลี่ยนใหม่ทุกวัน — ตอบให้ครบรับ XP โบนัส!</p>
+      <div class="modal-question" id="challenge-body"></div>
+      <div class="modal-progress" id="challenge-progress-wrap">
+        <div class="progress-bar"><span id="challenge-bar" style="width: 20%"></span></div>
+        <span id="challenge-label">1 / 5</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="levelup-modal">
+    <div class="modal-content">
+      <button class="modal-close" data-close-modal>✕</button>
+      <h2>🎓 ทดสอบเลื่อนระดับ</h2>
+      <p id="levelup-desc">10 ข้อ (ไวยากรณ์ 4 + คำศัพท์ 6) จากระดับปัจจุบันของคุณ — ตอบถูกอย่างน้อย 8/10 เพื่อเลื่อนระดับ</p>
+      <div class="modal-question" id="levelup-body"></div>
+      <div class="modal-progress" id="levelup-progress-wrap">
+        <div class="progress-bar"><span id="levelup-bar" style="width: 10%"></span></div>
+        <span id="levelup-label">1 / 10</span>
       </div>
     </div>
   </div>
@@ -104,5 +150,7 @@
   <script src="js/stats-store.js"></script>
   <script src="js/leaderboard.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/daily-challenge.js"></script>
+  <script src="js/level-up-test.js"></script>
 </body>
 </html>
