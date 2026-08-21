@@ -227,6 +227,7 @@ const StatsStore = {
       counters: { chatMessages: 0, placementTests: 0, levelsViewed: 0 },
       viewedLevels: [],
       battle: { rankPoints: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, totalBattles: 0 },
+      battleHistory: [],
       spelling: { gamesPlayed: 0, totalCorrect: 0, totalWrong: 0, bestStreak: 0, bestScore: 0 },
       dailyChallenge: { lastCompletedDate: null, totalCompleted: 0, bestScore: 0, lastXpGain: 0 },
       levelUpTests: { attempts: 0, passedCount: 0, lastResult: null },
@@ -357,23 +358,59 @@ const StatsStore = {
   recordBattle(won, battleState) {
     const s = this._stats;
     const b = s.battle;
-    b.totalBattles += 1;
 
-    let rpChange = 0;
+    // ===== Elo rating (same formula chess ratings use) =====
+    // Player rating = current rankPoints. Opponent rating = their rankRP.
+    // "Expected" is the player's win probability purely from the rating
+    // gap — so beating a much stronger opponent (low expected) pays out
+    // close to the full K, while beating a much weaker one (high expected)
+    // pays out very little. Symmetrically, losing to a stronger opponent
+    // barely costs anything, but losing to a weaker one costs a lot.
+    const playerRating = b.rankPoints;
+    const oppRating = battleState?.opponent?.rankRP ?? 50;
+    const expected = 1 / (1 + Math.pow(10, (oppRating - playerRating) / 400));
+
+    // K-factor: how volatile each result is. Higher while a player is still
+    // "placing" (their rating hasn't found its real level yet) so it moves
+    // fast toward the right range, then settles down once established —
+    // the standard approach used by chess federations (e.g. FIDE uses 40
+    // for new players, dropping to ~20 for experienced ones).
+    const gamesSoFar = b.totalBattles;
+    const K = gamesSoFar < 10 ? 40 : gamesSoFar < 30 ? 30 : 20;
+
+    b.totalBattles += 1;
+    const actual = won ? 1 : 0;
+    let rpChange = Math.round(K * (actual - expected));
+
     if (won) {
       b.wins += 1;
       b.streak += 1;
       if (b.streak > b.bestStreak) b.bestStreak = b.streak;
-      rpChange = 25 + Math.floor(b.streak / 2) * 5 + Math.floor((20 - battleState.turn) * 2);
+      rpChange = Math.max(rpChange, 1); // a win always nets at least +1 RP
       s.user.xp += 40 + rpChange;
     } else {
       b.losses += 1;
       b.streak = 0;
-      rpChange = -15;
+      rpChange = Math.min(rpChange, -1); // a loss always costs at least -1 RP
       s.user.xp += 10;
     }
 
     b.rankPoints = Math.max(0, b.rankPoints + rpChange);
+
+    // Keep a running table of recent battles so the player can see exactly
+    // how much RP each individual match earned/cost — not just the fleeting
+    // popup right after the fight. Capped to the most recent 20.
+    if (!Array.isArray(s.battleHistory)) s.battleHistory = [];
+    s.battleHistory.unshift({
+      date: new Date().toISOString(),
+      opponentName: battleState?.opponent?.name || 'ผู้เล่นนิรนาม',
+      opponentAvatar: battleState?.opponent?.avatar || '⚔️',
+      won,
+      rpChange,
+      rankPointsAfter: b.rankPoints,
+    });
+    if (s.battleHistory.length > 20) s.battleHistory.length = 20;
+
     const today = this._getTodayActivity();
     today.minutes += 8;
     s.user.minutesToday += 8;

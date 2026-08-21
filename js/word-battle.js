@@ -65,10 +65,21 @@ const WordBattle = {
 
     const playerRank = RankSystem.getRank(rp);
     const playerHP = 100;
-    const levelPool = this.sentences.filter(s =>
-      s.level === opponent.level || s.level === DATA.currentLevel
-    );
-    const pool = levelPool.length >= 5 ? levelPool : this.sentences;
+    // Sentence difficulty must match the OPPONENT's level, not whatever
+    // level page the player last happened to be browsing (DATA.currentLevel)
+    // — mixing those in was letting a beginner opponent like Rookie Bot (A1)
+    // hand out advanced C1/C2 sentences whenever the player had been
+    // reading a higher-level page. Each level already has ~160 usable
+    // sentences, so the exact-level pool alone is always enough; the
+    // adjacent-level and full-pool fallbacks below only exist as a safety
+    // net in case content is ever trimmed down later.
+    const levelIdx = DATA.levels.indexOf(opponent.level);
+    let pool = this.sentences.filter(s => s.level === opponent.level);
+    if (pool.length < 8) {
+      const adjacentLevels = [DATA.levels[levelIdx - 1], DATA.levels[levelIdx + 1]].filter(Boolean);
+      pool = this.sentences.filter(s => s.level === opponent.level || adjacentLevels.includes(s.level));
+    }
+    if (pool.length < 5) pool = this.sentences;
 
     this.state = {
       opponent,

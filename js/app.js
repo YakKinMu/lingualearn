@@ -170,6 +170,11 @@ function renderBattleSection() {
           <li>ยิ่งตอบเร็ว damage ยิ่งสูง!</li>
         </ol>
       </div>
+
+      <div class="battle-history-panel">
+        <h3>📋 ตารางได้รับคะแนน — ประวัติการต่อสู้ล่าสุด</h3>
+        <div id="battle-history-table">${buildBattleHistoryTable()}</div>
+      </div>
     </div>
   `;
 
@@ -178,6 +183,63 @@ function renderBattleSection() {
   });
 
   renderLeaderboardList();
+}
+
+// A per-battle "how much RP did I get" table, most recent match first.
+// Backed by StatsStore's battleHistory log (see recordBattle in
+// stats-store.js), which every finished battle appends to.
+function buildBattleHistoryTable() {
+  const history = StatsStore.get().battleHistory || [];
+  if (history.length === 0) {
+    return '<p class="lb-status">ยังไม่มีประวัติการต่อสู้ — ลองสู้สักตาแล้วกลับมาดูตารางนี้ได้เลย!</p>';
+  }
+
+  const rows = history.map(h => {
+    const rpClass = h.rpChange >= 0 ? 'up' : 'down';
+    const rpText = `${h.rpChange >= 0 ? '+' : ''}${h.rpChange} RP`;
+    const resultBadge = h.won
+      ? '<span class="battle-history-result win">ชนะ</span>'
+      : '<span class="battle-history-result lose">แพ้</span>';
+    const when = formatBattleHistoryDate(h.date);
+    return `
+      <tr>
+        <td class="battle-history-opponent">${h.opponentAvatar} ${escapeHtml(h.opponentName)}</td>
+        <td>${resultBadge}</td>
+        <td class="battle-history-rp ${rpClass}">${rpText}</td>
+        <td>${h.rankPointsAfter} RP</td>
+        <td class="battle-history-when">${when}</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `
+    <div class="vocab-table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>คู่ต่อสู้</th>
+            <th>ผล</th>
+            <th>ได้รับ RP</th>
+            <th>RP รวม</th>
+            <th>เมื่อ</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function formatBattleHistoryDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '-';
+  const diffMs = Date.now() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return 'เมื่อสักครู่';
+  if (diffMin < 60) return `${diffMin} นาทีที่แล้ว`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr} ชั่วโมงที่แล้ว`;
+  return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 }
 
 // Fetches the REAL, shared rank leaderboard from Firestore (see
@@ -211,39 +273,73 @@ async function renderLeaderboardList() {
     },
   ].sort((a, b) => b.rankRP - a.rankRP);
 
-  if (others.length === 0) {
-    listEl.innerHTML = `
-      <p class="lb-status">ยังไม่มีผู้เล่นคนอื่นขึ้นบอร์ด — ชนะการต่อสู้เพื่อขึ้นเป็นอันดับ 1!</p>
-      ${buildLbRow(players[0], 0)}
-    `;
-    return;
-  }
-
-  const TOP_N = 15;
-  const top = players.slice(0, TOP_N);
   const myIndex = players.findIndex(p => p.isYou);
 
-  let rowsHtml = top.map((p, i) => buildLbRow(p, i)).join('');
-  if (myIndex >= TOP_N) {
-    rowsHtml += `<div class="lb-divider">⋯</div>${buildLbRow(players[myIndex], myIndex)}`;
-  }
-  listEl.innerHTML = rowsHtml;
+  const statusHtml = others.length === 0
+    ? '<p class="lb-status">ยังไม่มีผู้เล่นคนอื่นขึ้นบอร์ด — ชนะการต่อสู้เพื่อขึ้นเป็นอันดับ 1!</p>'
+    : '';
+
+  listEl.innerHTML = `
+    ${statusHtml}
+    <div class="lb-podium-panel">
+      ${buildLbPodium(players.slice(0, 3))}
+      ${buildLbYouBox(players, myIndex)}
+    </div>
+  `;
 }
 
-function buildLbRow(p, i) {
-  const pr = RankSystem.getRank(p.rankRP);
-  const cls = p.isYou ? 'you' : i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
-  // p.avatar comes straight from Firestore for every player except "you",
-  // and other players' rows can be written by other browsers — so it must
-  // always be escaped (never rendered as raw HTML) to avoid stored XSS.
-  const avatarOut = p.avatarIsHtml ? p.avatar : escapeHtml(p.avatar || '🙂');
+// A player's avatar, styled as the same circular "profile" badge used
+// everywhere else in the app (navbar, profile page) — an image if they have
+// one, otherwise their emoji/initial on a gradient circle. Never raw text.
+function lbAvatarBadge(p, extraClass) {
+  const inner = p.avatarIsHtml ? p.avatar : escapeHtml(p.avatar || '🙂');
+  return `<span class="lb-avatar-badge${extraClass ? ' ' + extraClass : ''}">${inner}</span>`;
+}
+
+// Top-3 as a bar chart / podium — bars ordered 2nd, 1st, 3rd left-to-right
+// (classic podium layout), height scaled to the leader's RP. The avatar and
+// name both sit right above the bar (inside the track, bottom-aligned with
+// it) so the whole "who is this" group visually steps up/down together with
+// the bar's height instead of sitting on one flat row above every bar.
+function buildLbPodium(top3) {
+  if (!top3.length) return '<p class="lb-status">ยังไม่มีอันดับ</p>';
+  const maxRP = Math.max(1, top3[0].rankRP || 0);
+  const order = [1, 0, 2]; // index into top3: 2nd place, 1st place, 3rd place
+  const medals = ['🥈', '🥇', '🥉'];
+
+  const bars = order.map((idx, pos) => {
+    const p = top3[idx];
+    if (!p) return '<div class="lb-bar-col lb-bar-empty"></div>';
+    const pct = Math.max(28, Math.round((p.rankRP / maxRP) * 100));
+    return `
+      <div class="lb-bar-col${p.isYou ? ' you' : ''}">
+        <div class="lb-bar-track">
+          ${lbAvatarBadge(p)}
+          <span class="lb-bar-name">${escapeHtml(p.name)}${p.isYou ? ' (คุณ)' : ''}</span>
+          <div class="lb-bar" style="height:${pct}%">
+            <span class="lb-bar-medal">${medals[pos]}</span>
+          </div>
+        </div>
+        <span class="lb-bar-rp">${p.rankRP} RP</span>
+      </div>
+    `;
+  }).join('');
+
+  return `<div class="lb-podium">${bars}</div>`;
+}
+
+// Fixed "where do I stand" strip below the podium — always shows your own
+// current rank/avatar/name/RP, even if you're also one of the bars above.
+function buildLbYouBox(players, myIndex) {
+  if (myIndex < 0) return '';
+  const me = players[myIndex];
+  const pr = RankSystem.getRank(me.rankRP);
   return `
-    <div class="rank-lb-row ${cls}">
-      <span class="lb-pos">${i + 1}</span>
-      <span>${avatarOut}</span>
-      <span>${escapeHtml(p.name)}${p.isYou ? ' (คุณ)' : ''}</span>
-      <span>${pr.icon}</span>
-      <span class="lb-rp">${p.rankRP} RP</span>
+    <div class="lb-you-box">
+      ${lbAvatarBadge(me, 'lb-you-avatar')}
+      <span class="lb-you-pos">อันดับที่ ${myIndex + 1}</span>
+      <span class="lb-you-name">${escapeHtml(me.name)} (คุณ)</span>
+      <span class="lb-you-rp">${pr.icon} ${me.rankRP} RP</span>
     </div>
   `;
 }
@@ -709,37 +805,76 @@ function initModal() {
     StatsStore.record('placement', { level });
     renderAll();
 
+    // The test is genuinely done now — safe to lift the forced-flow flag
+    // so a refresh no longer pulls the person back into the test.
+    try {
+      const uid = (typeof AuthStore !== 'undefined') ? AuthStore.getCurrentUsername() : null;
+      if (uid) localStorage.removeItem('lingualearn_needs_placement_' + uid);
+    } catch { /* storage unavailable */ }
+
     document.getElementById('placement-close')?.addEventListener('click', () => {
       modal?.classList.add('hidden');
       document.body.classList.remove('onboarding-active');
     });
   }
 
+  function openPlacementTest() {
+    placementIndex = 0;
+    placementAnswers = [];
+    modal?.classList.remove('hidden');
+    document.body.classList.add('onboarding-active');
+    renderQ();
+  }
+
+  // Exposed so the forced onboarding flow (initOnboarding()) can jump
+  // straight into the test without needing a visible trigger button on the
+  // page — the old "วัดระดับของฉัน" button was removed since the level test
+  // now always happens automatically right after signup.
+  window.openPlacementTest = openPlacementTest;
+
   document.querySelectorAll('[data-action="placement-test"]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      placementIndex = 0;
-      placementAnswers = [];
-      modal?.classList.remove('hidden');
-      document.body.classList.add('onboarding-active');
-      renderQ();
-    });
+    btn.addEventListener('click', openPlacementTest);
   });
 }
 
-// Runs once, right after a brand-new account lands on index.html for the
-// first time (flag set by the register handler in initAuthPage()). It's a
-// forced full-page takeover — no skip, no close-by-clicking-outside — that
-// walks the new user through a two-step welcome, then hands off straight
-// into the existing placement-test modal so their level gets measured
-// before they can do anything else.
+// Runs on every load of index.html for a signed-in user. Two things can
+// trigger the forced flow:
+//  1. `lingualearn_just_registered` (sessionStorage, one-shot) — set right
+//     after registration — shows the two-step welcome, which then hands off
+//     into the placement test.
+//  2. `lingualearn_needs_placement_<uid>` (localStorage, persists across
+//     refresh/reload) — set at the same time as #1, but only cleared once
+//     the placement test actually finishes (see showResult() in initModal()
+//     below). If the person refreshes mid-welcome or mid-test, this flag is
+//     still set, so we skip straight back into the test instead of dumping
+//     them back onto the normal page with the test half-finished.
 function initOnboarding() {
   const overlay = document.getElementById('onboarding-modal');
   if (!overlay) return;
 
+  const uid = (typeof AuthStore !== 'undefined') ? AuthStore.getCurrentUsername() : null;
+
   let justRegistered = false;
   try { justRegistered = sessionStorage.getItem('lingualearn_just_registered') === '1'; } catch { /* storage unavailable */ }
-  if (!justRegistered) return;
+
+  let needsPlacement = false;
+  try { needsPlacement = !!uid && localStorage.getItem('lingualearn_needs_placement_' + uid) === '1'; } catch { /* storage unavailable */ }
+
+  if (!justRegistered && !needsPlacement) return;
   try { sessionStorage.removeItem('lingualearn_just_registered'); } catch { /* storage unavailable */ }
+
+  const startTest = () => {
+    overlay.classList.add('hidden');
+    document.body.classList.remove('onboarding-active');
+    if (typeof window.openPlacementTest === 'function') window.openPlacementTest();
+  };
+
+  // Already saw the welcome screens (or refreshed mid-test) — the pending
+  // flag alone is enough reason to force them straight back into the test.
+  if (!justRegistered && needsPlacement) {
+    startTest();
+    return;
+  }
 
   const step1 = document.getElementById('onboarding-step-1');
   const step2 = document.getElementById('onboarding-step-2');
@@ -752,11 +887,7 @@ function initOnboarding() {
     step2?.classList.remove('hidden');
   });
 
-  document.getElementById('onboarding-start-test')?.addEventListener('click', () => {
-    overlay.classList.add('hidden');
-    document.body.classList.remove('onboarding-active');
-    document.querySelector('[data-action="placement-test"]')?.click();
-  });
+  document.getElementById('onboarding-start-test')?.addEventListener('click', startTest);
 }
 
 function initMobileNav() {
@@ -846,6 +977,11 @@ function initAuthPage() {
     setFormBusy(registerForm, false);
     if (!res.ok) { showError(res.error); return; }
     try { sessionStorage.setItem('lingualearn_just_registered', '1'); } catch { /* storage unavailable */ }
+    // Persistent (survives refresh/reload, unlike the sessionStorage flag
+    // above which only controls whether the welcome text is shown once).
+    // Cleared only when the placement test actually finishes — see
+    // showResult() in initModal() below.
+    try { if (res.uid) localStorage.setItem('lingualearn_needs_placement_' + res.uid, '1'); } catch { /* storage unavailable */ }
     window.location.href = 'index.html';
   });
 
