@@ -898,6 +898,60 @@ function initOnboarding() {
   document.getElementById('onboarding-start-test')?.addEventListener('click', startTest);
 }
 
+/* ===== Custom confirm popup (replaces native confirm()) =====
+ * Usage: showConfirm({ title, message, confirmText, cancelText, tone })
+ *   -> returns a Promise<boolean> (true = user confirmed)
+ * tone: 'danger' (default, red) | 'neutral' (blue)
+ */
+function ensureConfirmOverlay() {
+  let overlay = document.getElementById('confirm-overlay');
+  if (overlay) return overlay;
+  overlay = document.createElement('div');
+  overlay.id = 'confirm-overlay';
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-card" id="confirm-card">
+      <div class="confirm-icon" id="confirm-icon">❔</div>
+      <h3 id="confirm-title"></h3>
+      <p id="confirm-message"></p>
+      <div class="confirm-actions">
+        <button type="button" class="confirm-btn-cancel" id="confirm-cancel-btn"></button>
+        <button type="button" class="confirm-btn-ok" id="confirm-ok-btn"></button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+function showConfirm({ title = 'ยืนยันการทำรายการ', message = '', confirmText = 'ยืนยัน', cancelText = 'ยกเลิก', tone = 'danger', icon } = {}) {
+  const overlay = ensureConfirmOverlay();
+  const card = overlay.querySelector('#confirm-card');
+  card.className = `confirm-card ${tone === 'neutral' ? 'tone-neutral' : ''}`;
+  overlay.querySelector('#confirm-icon').textContent = icon || (tone === 'neutral' ? 'ℹ️' : '⚠️');
+  overlay.querySelector('#confirm-title').textContent = title;
+  overlay.querySelector('#confirm-message').textContent = message;
+  overlay.querySelector('#confirm-cancel-btn').textContent = cancelText;
+  overlay.querySelector('#confirm-ok-btn').textContent = confirmText;
+
+  return new Promise(resolve => {
+    const close = result => {
+      overlay.classList.remove('open');
+      document.removeEventListener('keydown', onKey);
+      resolve(result);
+    };
+    const onKey = e => {
+      if (e.key === 'Escape') close(false);
+      if (e.key === 'Enter') close(true);
+    };
+    overlay.querySelector('#confirm-ok-btn').onclick = () => close(true);
+    overlay.querySelector('#confirm-cancel-btn').onclick = () => close(false);
+    overlay.onclick = e => { if (e.target === overlay) close(false); };
+    document.addEventListener('keydown', onKey);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+  });
+}
+
 function initMobileNav() {
   const toggle = document.querySelector('.nav-toggle');
   const navLinks = document.querySelector('.nav-links');
@@ -914,9 +968,19 @@ function initStatsActions() {
       a.click();
     }
     if (e.target.id === 'import-stats') document.getElementById('import-file')?.click();
-    if (e.target.id === 'reset-stats' && confirm('รีเซ็ตข้อมูลทั้งหมด?')) {
-      StatsStore.reset();
-      renderAll();
+    if (e.target.id === 'reset-stats') {
+      showConfirm({
+        title: 'รีเซ็ตข้อมูลทั้งหมด?',
+        message: 'สถิติ ระดับ XP และความคืบหน้าทั้งหมดจะถูกลบและไม่สามารถกู้คืนได้',
+        confirmText: 'รีเซ็ต',
+        cancelText: 'ยกเลิก',
+        tone: 'danger',
+        icon: '🗑️',
+      }).then(ok => {
+        if (!ok) return;
+        StatsStore.reset();
+        renderAll();
+      });
     }
   });
   document.getElementById('import-file')?.addEventListener('change', e => {
@@ -1161,9 +1225,17 @@ function initProfileEdit() {
       renderProfile();
     }
     if (e.target.id === 'profile-logout-btn') {
-      if (confirm('ต้องการออกจากระบบใช่ไหม?')) {
+      showConfirm({
+        title: 'ออกจากระบบ',
+        message: 'ต้องการออกจากระบบใช่ไหม? คุณสามารถเข้าสู่ระบบใหม่ได้ทุกเมื่อ',
+        confirmText: 'ออกจากระบบ',
+        cancelText: 'ยกเลิก',
+        tone: 'danger',
+        icon: '🚪',
+      }).then(ok => {
+        if (!ok) return;
         AuthStore.logout().then(() => { window.location.href = 'login.html'; });
-      }
+      });
     }
   });
 
