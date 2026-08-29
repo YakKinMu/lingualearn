@@ -36,13 +36,14 @@ const RankSystem = {
   },
 
   getOpponentForRP(rp) {
-    const sorted = [...DATA.battleOpponents].sort((a, b) => a.rankRP - b.rankRP);
-    let pick = sorted[0];
-    for (const o of sorted) {
-      if (o.rankRP <= rp + 150) pick = o;
-    }
-    const harder = sorted.find(o => o.rankRP > pick.rankRP && o.rankRP <= rp + 250);
-    return harder || pick;
+    // Match the opponent whose rankRP is CLOSEST to the player's own RP,
+    // so the fight stays within (or right at the edge of) the player's
+    // current rank tier. The previous version always bumped the pick up
+    // to a "harder" opponent as much as 250 RP higher, which could hand a
+    // low-Bronze player a Silver-tier opponent — a clear rank mismatch.
+    return DATA.battleOpponents.reduce((closest, o) =>
+      Math.abs(o.rankRP - rp) < Math.abs(closest.rankRP - rp) ? o : closest
+    );
   },
 };
 

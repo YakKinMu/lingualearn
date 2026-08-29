@@ -372,15 +372,19 @@
 .fighter.mini { font-size: 0.85rem; justify-content: center; }
 
 .fighter-avatar {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--bg-elevated);
+  width: 88px;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 1.8rem;
-  border: 2px solid var(--border);
+  overflow: hidden;
+}
+
+.fighter-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .fighter-info strong { display: block; font-size: 0.9rem; }
@@ -600,3 +604,78 @@
   .fighter.enemy-side { flex-direction: row; }
   .battle-how ol { grid-template-columns: 1fr; }
 }
+
+/* ===== Exit-battle confirmation overlay ===== */
+.battle-confirm-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 9, 14, 0.72);
+  backdrop-filter: blur(3px);
+  border-radius: inherit;
+  opacity: 0;
+  animation: battleConfirmFadeIn 0.18s ease forwards;
+}
+
+.battle-confirm-overlay.hidden { display: none; }
+
+@keyframes battleConfirmFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.battle-confirm-box {
+  width: min(90%, 360px);
+  background: var(--bg-card, #171a26);
+  border: 1px solid var(--red-border);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 1.5rem 1.5rem;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+  transform: translateY(8px) scale(0.96);
+  animation: battleConfirmPop 0.22s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+
+@keyframes battleConfirmPop {
+  from { transform: translateY(8px) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+.battle-confirm-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+}
+
+.battle-confirm-box h4 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text, #e8eaed);
+}
+
+.battle-confirm-box p {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 1.4rem;
+}
+
+.battle-confirm-box p strong { color: var(--red); }
+
+.battle-confirm-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+}
+
+.battle-confirm-actions .btn { flex: 1; }
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--red), #b91c1c);
+  color: #fff;
+  border: none;
+}
+.btn-danger:hover { filter: brightness(1.08); }

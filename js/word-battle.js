@@ -24,6 +24,63 @@ function tokenize(sentence) {
   return sentence.replace(/[.,!?;:'"]/g, '').split(/\s+/).filter(Boolean);
 }
 
+const WH_WORDS = ['what', 'where', 'when', 'why', 'how', 'who', 'whom', 'whose', 'which'];
+const AUX_WORDS = ['am', 'is', 'are', 'was', 'were', 'do', 'does', 'did', 'have', 'has', 'had',
+  'will', 'would', 'can', 'could', 'should', 'must', 'may', 'might', 'shall'];
+const PREP_PLACE = ['to', 'at', 'in', 'on', 'into', 'from', 'near', 'inside', 'outside'];
+const PREP_TIME = ['at', 'on', 'in', 'before', 'after', 'during', 'since', 'until'];
+const TIME_WORDS = ['yesterday', 'today', 'tomorrow', 'now', 'later', 'soon', 'already', 'yet',
+  'always', 'usually', 'often', 'never', 'sometimes'];
+
+// Produces a short Thai explanation of *why* an English sentence is ordered
+// the way it is. This is a rule-based heuristic (not full NLP) — it looks for
+// a handful of common, teachable patterns (question form, aux-before-verb,
+// adjective-before-noun, place-before-time) and explains whichever ones it
+// can confidently detect in the given sentence. It always falls back to the
+// basic Subject-Verb-Object rule so there's never an empty explanation.
+function explainWordOrder(text) {
+  const words = tokenize(text);
+  const lower = words.map(w => w.toLowerCase());
+  const notes = [];
+  const isQuestion = /\?\s*$/.test(text.trim());
+
+  if (isQuestion && WH_WORDS.includes(lower[0])) {
+    notes.push(`ประโยคคำถามที่ขึ้นต้นด้วยคำถาม "${words[0]}" ต้องตามด้วยกริยาช่วย แล้วค่อยตามด้วยประธาน (Wh-word + กริยาช่วย + ประธาน + กริยาหลัก)`);
+  } else if (isQuestion && AUX_WORDS.includes(lower[0])) {
+    notes.push(`ประโยคคำถามแบบ Yes/No ต้องเอากริยาช่วย "${words[0]}" ขึ้นต้นประโยค ก่อนประธาน`);
+  } else {
+    // Statement: find the first aux/verb-like word to split subject | predicate
+    const auxIdx = lower.findIndex(w => AUX_WORDS.includes(w));
+    if (auxIdx > 0) {
+      const subject = words.slice(0, auxIdx).join(' ');
+      notes.push(`ประธาน "${subject}" ต้องมาก่อนกริยาช่วย "${words[auxIdx]}" เสมอในประโยคบอกเล่า (Subject + Auxiliary + Verb)`);
+    } else {
+      notes.push('ประโยคบอกเล่าภาษาอังกฤษเรียงแบบ ประธาน + กริยา + กรรม (Subject + Verb + Object) เป็นหลัก');
+    }
+  }
+
+  // Adjective directly before a noun (very common beginner trip-up: "a nice hat" not "a hat nice")
+  for (let i = 0; i < words.length - 1; i++) {
+    if (['a', 'an', 'the'].includes(lower[i]) && i + 2 < words.length + 1 && lower[i + 1] && lower[i + 2]) {
+      const maybeAdj = words[i + 1];
+      const maybeNoun = words[i + 2];
+      if (maybeNoun && !AUX_WORDS.includes(maybeNoun.toLowerCase()) && maybeAdj.length > 2) {
+        notes.push(`คำขยาย "${maybeAdj}" ต้องวางไว้หน้าคำนาม "${maybeNoun}" เสมอ (ภาษาอังกฤษไม่เหมือนภาษาไทยที่วางคำขยายไว้หลังคำนาม)`);
+        break;
+      }
+    }
+  }
+
+  // Place phrase before a trailing time word
+  const placeIdx = lower.findIndex(w => PREP_PLACE.includes(w));
+  const timeIdx = lower.findIndex(w => TIME_WORDS.includes(w) || PREP_TIME.includes(w));
+  if (placeIdx !== -1 && timeIdx !== -1 && placeIdx < timeIdx) {
+    notes.push('ส่วนขยายที่บอก "สถานที่" จะวางไว้ก่อน ส่วนที่บอก "เวลา" เสมอ (Place ก่อน Time)');
+  }
+
+  return notes.slice(0, 2).join(' • ');
+}
+
 function normalizeSentence(s) {
   return tokenize(s).join(' ').toLowerCase();
 }
@@ -49,8 +106,13 @@ const WordBattle = {
     this.canvas = document.getElementById('battle-canvas');
     this.screen = this.modal?.querySelector('.battle-screen');
     this.sentences = buildBattleSentences();
-    document.getElementById('battle-close')?.addEventListener('click', () => this.close());
-    this.modal?.addEventListener('click', e => { if (e.target === this.modal) this.close(); });
+    document.getElementById('battle-close')?.addEventListener('click', () => this.requestClose());
+    this.modal?.addEventListener('click', e => {
+      // Only close on backdrop click if there's no battle actively in
+      // progress — otherwise clicking near the edge of the modal while
+      // mid-fight would accidentally quit the battle.
+      if (e.target === this.modal && !this.isBattleActive()) this.close();
+    });
     document.querySelectorAll('[data-start-battle]').forEach(btn => {
       btn.addEventListener('click', () => this.start(btn.dataset.startBattle || 'auto'));
     });
@@ -101,12 +163,60 @@ const WordBattle = {
     this.nextRound();
   },
 
+  requestClose() {
+    // Leaving mid-fight forfeits the battle (counts as a loss, RP deducted)
+    // — only ask for confirmation, and only forfeit, while a battle is
+    // actually still in progress. Outside a battle (e.g. on the result
+    // screen), just close normally.
+    if (!this.isBattleActive()) {
+      this.close();
+      return;
+    }
+    this.showConfirmOverlay();
+  },
+
+  showConfirmOverlay() {
+    const overlay = this.modal?.querySelector('#battle-confirm-overlay');
+    if (!overlay) return;
+    overlay.classList.remove('hidden');
+    const okBtn = overlay.querySelector('#battle-confirm-ok');
+    const cancelBtn = overlay.querySelector('#battle-confirm-cancel');
+    const cleanup = () => {
+      overlay.classList.add('hidden');
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onBackdrop);
+    };
+    const onOk = () => { cleanup(); this.forfeit(); };
+    const onCancel = () => cleanup();
+    const onBackdrop = e => { if (e.target === overlay) cleanup(); };
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onBackdrop);
+  },
+
+  forfeit() {
+    this.stopTimer();
+    const s = this.state;
+    if (s) {
+      s.enemyHP = Math.max(s.enemyHP, 1); // ensure it registers as a loss, not a draw
+      s.playerHP = 0;
+      StatsStore.recordBattle(false, s);
+    }
+    this.close();
+  },
+
   close() {
     this.stopTimer();
     this.modal?.classList.add('hidden');
+    this.modal?.querySelector('#battle-confirm-overlay')?.classList.add('hidden');
     document.body.style.overflow = '';
     if (typeof renderBattleSection === 'function') renderBattleSection();
     if (typeof refreshUI === 'function') refreshUI();
+  },
+
+  isBattleActive() {
+    return !!(this.state && this.state.playerHP > 0 && this.state.enemyHP > 0);
   },
 
   stopTimer() {
@@ -265,10 +375,14 @@ const WordBattle = {
   onPlayerFail(reason) {
     this.stopTimer();
     const correctText = this.state.current.text;
+    const why = explainWordOrder(correctText);
     this.log(`✗ ${reason} คำตอบ: "${correctText}"`, 'bad');
     this.flash('player');
-    this.popup(`✗ ${reason}`, 'พลาดจังหวะโจมตี!', 'miss', `เฉลย: "${correctText}"`);
-    setTimeout(() => this.afterPlayerTurn(false), 2800);
+    this.popup(`✗ ${reason}`, 'พลาดจังหวะโจมตี!', 'miss', `เฉลย: "${correctText}"`, {
+      explanation: why,
+      requireClose: true,
+      onClose: () => this.afterPlayerTurn(false),
+    });
   },
 
   afterPlayerTurn(success) {
@@ -368,7 +482,8 @@ const WordBattle = {
     this.state.log.push({ text, type });
   },
 
-  popup(title, sub, type, detail) {
+  popup(title, sub, type, detail, options = {}) {
+    const { explanation, requireClose = false, onClose } = options;
     // Don't depend on this.screen having been captured correctly at init time —
     // re-resolve it here too, and fall back further if needed, so the popup can
     // never silently fail to show just because of a stale reference.
@@ -399,7 +514,7 @@ const WordBattle = {
       padding: 0.9rem 1.75rem; border-radius: 20px;
       background: rgba(15, 17, 23, 0.96); border: 2px solid ${color};
       box-shadow: 0 12px 40px rgba(0,0,0,0.6);
-      font-family: inherit; cursor: pointer;
+      font-family: inherit; cursor: ${requireClose ? 'default' : 'pointer'};
       opacity: 0; transform: translate(-50%, -50%) scale(0.6);
       transition: opacity 0.22s ease, transform 0.22s cubic-bezier(.34,1.56,.64,1);
     `;
@@ -407,6 +522,8 @@ const WordBattle = {
       <span style="display:block;font-size:1.5rem;font-weight:800;letter-spacing:.03em;color:${color}">${escapeHtml(title)}</span>
       ${sub ? `<span style="display:block;margin-top:.15rem;font-size:1rem;font-weight:600;color:#e8eaed;opacity:.9">${escapeHtml(sub)}</span>` : ''}
       ${detail ? `<span style="display:block;margin-top:.5rem;padding-top:.5rem;border-top:1px solid rgba(255,255,255,.15);font-size:.85rem;font-weight:500;color:#9aa0b0;line-height:1.4">${escapeHtml(detail)}</span>` : ''}
+      ${explanation ? `<span style="display:block;margin-top:.5rem;font-size:.82rem;font-weight:500;color:#fbbf24;line-height:1.5;text-align:left">💡 ${escapeHtml(explanation)}</span>` : ''}
+      ${requireClose ? `<button type="button" class="battle-popup-close" style="margin-top:.9rem;padding:.5rem 1.4rem;border-radius:12px;border:none;background:${color};color:#0f1117;font-weight:700;font-size:.9rem;cursor:pointer;">เข้าใจแล้ว ไปต่อ</button>` : ''}
     `;
     screen.appendChild(el);
 
@@ -415,14 +532,24 @@ const WordBattle = {
       el.style.transform = 'translate(-50%, -50%) scale(1)';
     });
 
-    const life = detail ? 2600 : 1400;
     const hide = () => {
       el.style.opacity = '0';
       el.style.transform = 'translate(-50%, -50%) scale(0.92) translateY(-10px)';
-      setTimeout(() => el.remove(), 220);
+      setTimeout(() => {
+        el.remove();
+        if (requireClose && onClose) onClose();
+      }, 220);
     };
-    const timer = setTimeout(hide, life);
-    el.addEventListener('click', () => { clearTimeout(timer); hide(); });
+
+    if (requireClose) {
+      // No auto-dismiss timer — the player must press the button themselves
+      // to read the explanation and move on at their own pace.
+      el.querySelector('.battle-popup-close')?.addEventListener('click', hide);
+    } else {
+      const life = detail ? 2600 : 1400;
+      const timer = setTimeout(hide, life);
+      el.addEventListener('click', () => { clearTimeout(timer); hide(); });
+    }
   },
 
   flash(target) {
