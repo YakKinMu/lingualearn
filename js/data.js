@@ -28,10 +28,46 @@ const DATA = {
       description: 'เข้าใจและใช้สำนวนพื้นฐานในชีวิตประจำวัน แนะนำตัว ถามทิศทาง สั่งอาหาร',
       canDo: ['ทักทายและแนะนำตัว', 'ถาม-ตอบข้อมูลส่วนตัว', 'สั่งอาหารและเครื่องดื่ม', 'นับเลขและบอกเวลา', 'พูดถึงครอบครัวและงานอดิเรก'],
       grammar: [
-        { topic: 'Verb to be (am / is / are)', rule: 'ใช้แสดงสถานะ อาชีพ สัญชาติ', examples: ['I am a student.', 'She is from Thailand.', 'They are happy.'] },
-        { topic: 'Present Simple', rule: 'กิจวัตรประจำวัน ความจริงทั่วไป', examples: ['I work every day.', 'He likes coffee.', 'We live in Bangkok.'] },
-        { topic: 'Articles (a / an / the)', rule: 'a/an สำหรับคำนามนับได้ the สำหรับคำเฉพาะ', examples: ['I have a cat.', 'She is an engineer.', 'The sun is hot.'] },
-        { topic: 'Question words', rule: 'What, Where, When, Who, How', examples: ['What is your name?', 'Where do you live?', 'How old are you?'] },
+        { topic: 'Verb to be (am / is / are)', rule: 'ใช้แสดงสถานะ อาชีพ สัญชาติ — I ใช้ am, he/she/it ใช้ is, you/we/they ใช้ are', structure: 'Subject + am/is/are + ...', examples: [
+          { en: 'I am a student.', th: 'ฉันเป็นนักเรียน' },
+          { en: 'She is from Thailand.', th: 'เธอมาจากประเทศไทย' },
+          { en: 'They are happy.', th: 'พวกเขามีความสุข' },
+        ] },
+        { topic: 'Present Simple', rule: 'กิจวัตรประจำวัน ความจริงทั่วไป — เติม s/es ที่กริยาเมื่อประธานเป็น he/she/it', structure: 'Subject + V1 (s/es)', examples: [
+          { en: 'I work every day.', th: 'ฉันทำงานทุกวัน' },
+          { en: 'He likes coffee.', th: 'เขาชอบกาแฟ' },
+          { en: 'We live in Bangkok.', th: 'เราอาศัยอยู่ในกรุงเทพฯ' },
+        ] },
+        { topic: 'Articles (a / an / the)', rule: 'a ใช้กับคำนามนับได้ที่ขึ้นต้นเสียงพยัญชนะ an ใช้กับเสียงสระ the ใช้กับสิ่งที่เจาะจง', structure: 'a/an + noun (ไม่เจาะจง) | the + noun (เจาะจง)', examples: [
+          { en: 'I have a cat.', th: 'ฉันมีแมวหนึ่งตัว' },
+          { en: 'She is an engineer.', th: 'เธอเป็นวิศวกร' },
+          { en: 'The sun is hot.', th: 'ดวงอาทิตย์ร้อน' },
+        ] },
+        { topic: 'Question words', rule: 'คำขึ้นต้นประโยคคำถามเพื่อถามข้อมูล — What (อะไร) Where (ที่ไหน) When (เมื่อไหร่) Who (ใคร) How (อย่างไร)', structure: 'Question word + verb + subject...?', examples: [
+          { en: 'What is your name?', th: 'คุณชื่ออะไร' },
+          { en: 'Where do you live?', th: 'คุณอาศัยอยู่ที่ไหน' },
+          { en: 'How old are you?', th: 'คุณอายุเท่าไหร่' },
+        ] },
+        { topic: 'Possessive adjectives', rule: 'แสดงความเป็นเจ้าของ วางหน้าคำนาม — my, your, his, her, its, our, their', structure: 'Possessive + noun', examples: [
+          { en: 'This is my bag.', th: 'นี่คือกระเป๋าของฉัน' },
+          { en: 'Her name is Anna.', th: 'เธอชื่อแอนนา' },
+          { en: 'Our house is near the park.', th: 'บ้านของเราอยู่ใกล้สวนสาธารณะ' },
+        ] },
+        { topic: 'Plural nouns', rule: 'คำนามนับได้ส่วนใหญ่เติม -s ท้ายคำ บางคำเปลี่ยนรูปไม่สม่ำเสมอ เช่น man → men, child → children', structure: 'noun + -s / -es / irregular form', examples: [
+          { en: 'I have two dogs.', th: 'ฉันมีสุนัขสองตัว' },
+          { en: 'There are three children in the room.', th: 'มีเด็กสามคนอยู่ในห้อง' },
+          { en: 'She bought some boxes.', th: 'เธอซื้อกล่องมาหลายใบ' },
+        ] },
+        { topic: 'Prepositions of place', rule: 'in ใช้กับพื้นที่ปิด/ใหญ่ on ใช้กับพื้นผิว at ใช้กับจุดที่เจาะจง', structure: 'Subject + verb + in/on/at + place', examples: [
+          { en: 'The keys are in the drawer.', th: 'กุญแจอยู่ในลิ้นชัก' },
+          { en: 'The book is on the table.', th: 'หนังสืออยู่บนโต๊ะ' },
+          { en: 'I am at the bus stop.', th: 'ฉันอยู่ที่ป้ายรถเมล์' },
+        ] },
+        { topic: 'Can (ability & permission)', rule: 'can ใช้บอกความสามารถหรือขออนุญาต ตามด้วยกริยาช่องที่ 1 เสมอ ไม่ผันตามประธาน', structure: 'Subject + can/can\'t + V1', examples: [
+          { en: 'I can swim very well.', th: 'ฉันว่ายน้ำเก่งมาก' },
+          { en: 'Can I use your phone?', th: 'ขอใช้โทรศัพท์คุณได้ไหม' },
+          { en: 'She can\'t speak French.', th: 'เธอพูดภาษาฝรั่งเศสไม่ได้' },
+        ] },
       ],
       vocabulary: [
         { word: 'hello', meaning: 'สวัสดี', phonetic: '/hɛˈloʊ/', thaiReading: 'ฮะ-โล', example: 'Hello! Nice to meet you.' },
@@ -180,6 +216,12 @@ const DATA = {
         { en: 'How much is this?', th: 'อันนี้เท่าไหร่', context: 'ซื้อของ' },
         { en: 'I don\'t understand.', th: 'ฉันไม่เข้าใจ', context: 'ขอความช่วยเหลือ' },
         { en: 'Where is the bathroom?', th: 'ห้องน้ำอยู่ที่ไหน', context: 'ถามทาง' },
+        { en: 'How are you today?', th: 'วันนี้เป็นอย่างไรบ้าง', context: 'ทักทาย' },
+        { en: 'What time is it?', th: 'ตอนนี้กี่โมงแล้ว', context: 'ถามเวลา' },
+        { en: 'Can you help me, please?', th: 'ช่วยฉันหน่อยได้ไหม', context: 'ขอความช่วยเหลือ' },
+        { en: 'I\'d like a coffee, please.', th: 'ขอกาแฟหนึ่งแก้วค่ะ/ครับ', context: 'สั่งอาหาร/เครื่องดื่ม' },
+        { en: 'See you later!', th: 'แล้วเจอกันนะ', context: 'บอกลา' },
+        { en: 'I\'m from Thailand.', th: 'ฉันมาจากประเทศไทย', context: 'บอกสัญชาติ' },
       ],
       dialogues: [
         {
@@ -191,11 +233,36 @@ const DATA = {
             { speaker: 'B', en: 'I\'m from Japan. And you?', th: 'ฉันมาจากญี่ปุ่น แล้วคุณล่ะ' },
           ],
         },
+        {
+          title: 'สั่งอาหารที่ร้าน',
+          lines: [
+            { speaker: 'Server', en: 'Hi! What would you like to order?', th: 'สวัสดีค่ะ สั่งอะไรดีคะ' },
+            { speaker: 'Customer', en: 'I\'d like a chicken sandwich and orange juice, please.', th: 'ขอแซนด์วิชไก่กับน้ำส้มค่ะ' },
+            { speaker: 'Server', en: 'Would you like anything else?', th: 'เอาอย่างอื่นเพิ่มไหมคะ' },
+            { speaker: 'Customer', en: 'No, thank you. That\'s all.', th: 'ไม่แล้วค่ะ ขอบคุณ' },
+          ],
+        },
+        {
+          title: 'ถามทาง',
+          lines: [
+            { speaker: 'A', en: 'Excuse me, where is the train station?', th: 'ขอโทษค่ะ สถานีรถไฟอยู่ที่ไหน' },
+            { speaker: 'B', en: 'Go straight, then turn left at the corner.', th: 'ตรงไป แล้วเลี้ยวซ้ายตรงหัวมุม' },
+            { speaker: 'A', en: 'Is it far from here?', th: 'ไกลจากตรงนี้ไหมคะ' },
+            { speaker: 'B', en: 'No, it\'s about five minutes on foot.', th: 'ไม่ไกลค่ะ เดินประมาณ 5 นาที' },
+          ],
+        },
       ],
       sentences: [
         { en: 'I am twenty-five years old.', th: 'ฉันอายุ 25 ปี', note: 'บอกอายุ' },
         { en: 'This is my book.', th: 'นี่คือหนังสือของฉัน', note: 'ทำความรู้จักสิ่งของ' },
         { en: 'I like reading and swimming.', th: 'ฉันชอบอ่านหนังสือและว่ายน้ำ', note: 'งานอดิเรก' },
+        { en: 'My father works in a bank.', th: 'พ่อของฉันทำงานที่ธนาคาร', note: 'พูดถึงอาชีพครอบครัว' },
+        { en: 'We wake up at six every morning.', th: 'เราตื่นนอนตอนหกโมงทุกเช้า', note: 'กิจวัตรประจำวัน' },
+        { en: 'There is a cat under the table.', th: 'มีแมวอยู่ใต้โต๊ะ', note: 'บอกตำแหน่ง' },
+        { en: 'Can you speak English?', th: 'คุณพูดภาษาอังกฤษได้ไหม', note: 'ถามความสามารถ' },
+        { en: 'I don\'t have any money today.', th: 'วันนี้ฉันไม่มีเงินเลย', note: 'ปฏิเสธการมี' },
+        { en: 'She is wearing a blue dress.', th: 'เธอใส่ชุดสีฟ้า', note: 'บรรยายเสื้อผ้า' },
+        { en: 'What is your favorite food?', th: 'อาหารที่คุณชอบที่สุดคืออะไร', note: 'ถามความชอบ' },
       ],
     },
 
@@ -206,10 +273,35 @@ const DATA = {
       description: 'สื่อสารเรื่องง่ายๆ ในงานและชีวิตประจำวัน อดีต การเดินทาง สุขภาพ',
       canDo: ['เล่าประสบการณ์ในอดีต', 'วางแผนการเดินทาง', 'อธิบายอาการป่วย', 'เปรียบเทียบสิ่งของ', 'เขียนอีเมลสั้นๆ'],
       grammar: [
-        { topic: 'Past Simple', rule: 'เหตุการณ์ในอดีตที่จบแล้ว', examples: ['I visited Paris last year.', 'She didn\'t come yesterday.', 'Did you see the movie?'] },
-        { topic: 'Future (will / going to)', rule: 'แผนในอนาคต หรือการตัดสินใจทันที', examples: ['I will call you later.', 'We are going to travel next month.'] },
-        { topic: 'Comparatives & Superlatives', rule: 'เปรียบเทียบ 2 สิ่ง หรือมากที่สุด', examples: ['This bag is cheaper than that one.', 'She is the tallest in the class.'] },
-        { topic: 'Countable / Uncountable', rule: 'คำนามนับได้/ไม่ได้ some, any, much, many', examples: ['I need some water.', 'There aren\'t many chairs.'] },
+        { topic: 'Past Simple', rule: 'เหตุการณ์ในอดีตที่จบแล้ว — กริยาปกติเติม -ed กริยาไม่ปกติเปลี่ยนรูป', structure: 'Subject + V2 (past) | did + not + V1 | Did + subject + V1?', examples: [
+          { en: 'I visited Paris last year.', th: 'ฉันไปเที่ยวปารีสเมื่อปีที่แล้ว' },
+          { en: 'She didn\'t come yesterday.', th: 'เธอไม่ได้มาเมื่อวาน' },
+          { en: 'Did you see the movie?', th: 'คุณดูหนังเรื่องนั้นหรือเปล่า' },
+        ] },
+        { topic: 'Future (will / going to)', rule: 'will ใช้ตัดสินใจ ณ ตอนพูด/คาดเดา ส่วน going to ใช้กับแผนที่วางไว้ล่วงหน้า', structure: 'Subject + will + V1 | Subject + am/is/are + going to + V1', examples: [
+          { en: 'I will call you later.', th: 'ฉันจะโทรหาคุณทีหลัง' },
+          { en: 'We are going to travel next month.', th: 'เราวางแผนจะไปเที่ยวเดือนหน้า' },
+        ] },
+        { topic: 'Comparatives & Superlatives', rule: 'เปรียบเทียบ 2 สิ่งเติม -er + than ส่วนเปรียบเทียบมากที่สุดเติม the -est', structure: 'A + adj-er + than + B | A + the + adj-est', examples: [
+          { en: 'This bag is cheaper than that one.', th: 'กระเป๋าใบนี้ถูกกว่าใบนั้น' },
+          { en: 'She is the tallest in the class.', th: 'เธอสูงที่สุดในห้อง' },
+        ] },
+        { topic: 'Countable / Uncountable', rule: 'คำนามนับได้ใช้ many คำนามนับไม่ได้ใช้ much ส่วน some/any ใช้ได้ทั้งสองแบบ', structure: 'some/any + noun | many + countable | much + uncountable', examples: [
+          { en: 'I need some water.', th: 'ฉันต้องการน้ำสักหน่อย' },
+          { en: 'There aren\'t many chairs.', th: 'มีเก้าอี้ไม่เยอะ' },
+        ] },
+        { topic: 'Present Continuous', rule: 'ใช้พูดถึงสิ่งที่กำลังเกิดขึ้นตอนนี้ หรือแผนที่จัดไว้แล้วในอนาคตอันใกล้', structure: 'Subject + am/is/are + V-ing', examples: [
+          { en: 'I am studying English now.', th: 'ตอนนี้ฉันกำลังเรียนภาษาอังกฤษ' },
+          { en: 'We are meeting them tomorrow.', th: 'พรุ่งนี้เรานัดเจอกัน' },
+        ] },
+        { topic: 'Modal verbs (should / must)', rule: 'should ใช้ให้คำแนะนำ must ใช้แสดงความจำเป็น/ข้อบังคับ ตามด้วยกริยาช่องที่ 1', structure: 'Subject + should/must + V1', examples: [
+          { en: 'You should see a doctor.', th: 'คุณควรไปหาหมอ' },
+          { en: 'You must wear a seatbelt.', th: 'คุณต้องคาดเข็มขัดนิรภัย' },
+        ] },
+        { topic: 'Adverbs of frequency', rule: 'บอกความถี่ของการกระทำ วางหน้ากริยาแท้ แต่วางหลัง verb to be — always, usually, often, sometimes, never', structure: 'Subject + adverb + V1 | Subject + is/are + adverb', examples: [
+          { en: 'I always drink coffee in the morning.', th: 'ฉันดื่มกาแฟทุกเช้าเสมอ' },
+          { en: 'She is never late.', th: 'เธอไม่เคยมาสายเลย' },
+        ] },
       ],
       vocabulary: [
         { word: 'travel', meaning: 'เดินทาง', phonetic: '/ˈtrævəl/', thaiReading: 'แทร-วัล', example: 'I love to travel abroad.' },
@@ -358,6 +450,12 @@ const DATA = {
         { en: 'I used to live in Chiang Mai.', th: 'ฉันเคยอยู่เชียงใหม่', context: 'เล่าอดีต' },
         { en: 'I\'m looking forward to it.', th: 'ฉันตั้งตารอ', context: 'แสดงความคาดหวัง' },
         { en: 'It depends on the weather.', th: 'ขึ้นอยู่กับอากาศ', context: 'ตอบแบบไม่แน่นอน' },
+        { en: 'Would you mind waiting a moment?', th: 'รอสักครู่ได้ไหมคะ', context: 'ขอร้องสุภาพ' },
+        { en: 'What do you think about it?', th: 'คุณคิดยังไงกับเรื่องนี้', context: 'ถามความคิดเห็น' },
+        { en: 'I need to check my schedule.', th: 'ฉันต้องเช็คตารางเวลาก่อน', context: 'นัดหมาย' },
+        { en: 'Sorry for the inconvenience.', th: 'ขอโทษที่ทำให้ไม่สะดวก', context: 'ขอโทษ' },
+        { en: 'Let\'s keep in touch.', th: 'ติดต่อกันไว้นะ', context: 'บอกลา' },
+        { en: 'I have a lot on my plate right now.', th: 'ตอนนี้ฉันมีเรื่องต้องทำเยอะมาก', context: 'บอกว่ายุ่ง' },
       ],
       dialogues: [
         {
@@ -369,11 +467,36 @@ const DATA = {
             { speaker: 'Customer', en: 'Just water, thank you.', th: 'น้ำเปล่าพอค่ะ ขอบคุณ' },
           ],
         },
+        {
+          title: 'นัดหมายหมอ',
+          lines: [
+            { speaker: 'Receptionist', en: 'Good morning, how can I help you?', th: 'สวัสดีค่ะ มีอะไรให้ช่วยไหมคะ' },
+            { speaker: 'Patient', en: 'I\'d like to make an appointment for Friday.', th: 'อยากนัดวันศุกร์ค่ะ' },
+            { speaker: 'Receptionist', en: 'Is 10 AM okay for you?', th: 'สิบโมงเช้าสะดวกไหมคะ' },
+            { speaker: 'Patient', en: 'Yes, that works for me. Thank you.', th: 'สะดวกค่ะ ขอบคุณ' },
+          ],
+        },
+        {
+          title: 'วางแผนเดินทาง',
+          lines: [
+            { speaker: 'A', en: 'Have you decided where to go on holiday?', th: 'ตัดสินใจแล้วหรือยังว่าจะไปเที่ยวที่ไหน' },
+            { speaker: 'B', en: 'I\'m thinking about going to Phuket next month.', th: 'กำลังคิดจะไปภูเก็ตเดือนหน้า' },
+            { speaker: 'A', en: 'That sounds great! How long will you stay?', th: 'ดีจัง จะอยู่นานแค่ไหน' },
+            { speaker: 'B', en: 'Probably about five days.', th: 'น่าจะประมาณห้าวัน' },
+          ],
+        },
       ],
       sentences: [
         { en: 'I went to the market yesterday.', th: 'ฉันไปตลาดเมื่อวาน', note: 'Past Simple' },
         { en: 'She is taller than her brother.', th: 'เธอสูงกว่าพี่ชาย', note: 'Comparative' },
         { en: 'We are going to visit grandma this weekend.', th: 'เราจะไปเยี่ยมคุณยายสุดสัปดาห์นี้', note: 'Going to' },
+        { en: 'I am cooking dinner right now.', th: 'ตอนนี้ฉันกำลังทำอาหารเย็นอยู่', note: 'Present Continuous' },
+        { en: 'You should drink more water every day.', th: 'คุณควรดื่มน้ำให้มากขึ้นทุกวัน', note: 'Should (advice)' },
+        { en: 'He usually takes the bus to work.', th: 'เขามักจะนั่งรถเมล์ไปทำงาน', note: 'Adverb of frequency' },
+        { en: 'There isn\'t much time left.', th: 'เหลือเวลาไม่มากแล้ว', note: 'Uncountable noun' },
+        { en: 'We didn\'t have any plans for the weekend.', th: 'เราไม่มีแผนอะไรสำหรับสุดสัปดาห์', note: 'Past Simple negative' },
+        { en: 'This is the cheapest hotel in the area.', th: 'นี่คือโรงแรมที่ถูกที่สุดในย่านนี้', note: 'Superlative' },
+        { en: 'I\'ll send you the file as soon as possible.', th: 'ฉันจะส่งไฟล์ให้เร็วที่สุด', note: 'Future (will)' },
       ],
     },
 
@@ -384,10 +507,35 @@ const DATA = {
       description: 'จัดการสถานการณ์ส่วนใหญ่เมื่อเดินทาง แสดงความคิดเห็น อธิบายประสบการณ์',
       canDo: ['แสดงความคิดเห็นและเหตุผล', 'เล่าเรื่องราวและประสบการณ์', 'เขียนจดหมายและอีเมล', 'เข้าใจข่าวง่ายๆ', 'พูดคุยเรื่องงานและการศึกษา'],
       grammar: [
-        { topic: 'Present Perfect', rule: 'ประสบการณ์ในอดีต หรือเริ่มในอดีตต่อเนื่องถึงปัจจุบัน', examples: ['I have lived here for 5 years.', 'Have you ever been to Japan?', 'She has just finished.'] },
-        { topic: 'First Conditional', rule: 'If + Present, will + V — เงื่อนไขที่เป็นไปได้', examples: ['If it rains, I will stay home.', 'If you study hard, you will pass.'] },
-        { topic: 'Passive Voice (basic)', rule: 'เน้น action มากกว่า subject', examples: ['English is spoken worldwide.', 'The book was written in 1990.'] },
-        { topic: 'Reported Speech', rule: 'เล่าสิ่งที่คนอื่นพูด', examples: ['She said she was tired.', 'He told me he would come.'] },
+        { topic: 'Present Perfect', rule: 'ประสบการณ์ในอดีตที่ไม่ระบุเวลาชัดเจน หรือเหตุการณ์ที่เริ่มในอดีตแล้วต่อเนื่องถึงปัจจุบัน', structure: 'Subject + have/has + V3 (past participle)', examples: [
+          { en: 'I have lived here for 5 years.', th: 'ฉันอาศัยอยู่ที่นี่มา 5 ปีแล้ว' },
+          { en: 'Have you ever been to Japan?', th: 'คุณเคยไปญี่ปุ่นไหม' },
+          { en: 'She has just finished.', th: 'เธอเพิ่งทำเสร็จ' },
+        ] },
+        { topic: 'First Conditional', rule: 'ใช้พูดถึงเงื่อนไขที่มีความเป็นไปได้จริงในอนาคต', structure: 'If + Present Simple, ... will + V1', examples: [
+          { en: 'If it rains, I will stay home.', th: 'ถ้าฝนตก ฉันจะอยู่บ้าน' },
+          { en: 'If you study hard, you will pass.', th: 'ถ้าคุณตั้งใจเรียน คุณจะสอบผ่าน' },
+        ] },
+        { topic: 'Passive Voice (basic)', rule: 'ใช้เมื่อต้องการเน้นการกระทำหรือผู้ถูกกระทำ มากกว่าตัวผู้กระทำ', structure: 'Subject + is/was + V3 (+ by...)', examples: [
+          { en: 'English is spoken worldwide.', th: 'ภาษาอังกฤษถูกใช้พูดกันทั่วโลก' },
+          { en: 'The book was written in 1990.', th: 'หนังสือเล่มนี้ถูกเขียนขึ้นในปี 1990' },
+        ] },
+        { topic: 'Reported Speech', rule: 'เล่าสิ่งที่คนอื่นพูดโดยอ้อม กริยาถอยกาลไปหนึ่งขั้น (say → said, is → was)', structure: 'Subject + said/told + (that) + clause (backshifted)', examples: [
+          { en: 'She said she was tired.', th: 'เธอบอกว่าเธอเหนื่อย' },
+          { en: 'He told me he would come.', th: 'เขาบอกฉันว่าเขาจะมา' },
+        ] },
+        { topic: 'Present Perfect Continuous', rule: 'เน้นความต่อเนื่องของการกระทำที่เริ่มในอดีตและดำเนินมาถึงปัจจุบัน มักใช้กับ for/since', structure: 'Subject + have/has + been + V-ing', examples: [
+          { en: 'I have been studying English for two years.', th: 'ฉันเรียนภาษาอังกฤษมาสองปีแล้ว' },
+          { en: 'It has been raining since morning.', th: 'ฝนตกมาตั้งแต่เช้าแล้ว' },
+        ] },
+        { topic: 'Gerunds & Infinitives', rule: 'กริยาบางคำตามด้วย V-ing (enjoy, avoid) บางคำตามด้วย to + V1 (want, decide) ต้องจำเป็นคำๆ ไป', structure: 'verb + V-ing | verb + to + V1', examples: [
+          { en: 'I enjoy reading novels.', th: 'ฉันชอบอ่านนิยาย' },
+          { en: 'She decided to quit her job.', th: 'เธอตัดสินใจลาออกจากงาน' },
+        ] },
+        { topic: 'Modal verbs (obligation)', rule: 'have to แสดงความจำเป็นจากภายนอก don\'t have to แปลว่าไม่จำเป็น ต่างจาก mustn\'t ที่แปลว่าห้าม', structure: 'Subject + have to/don\'t have to/mustn\'t + V1', examples: [
+          { en: 'I have to finish this by Friday.', th: 'ฉันต้องทำสิ่งนี้ให้เสร็จภายในวันศุกร์' },
+          { en: 'You mustn\'t smoke here.', th: 'คุณห้ามสูบบุหรี่ที่นี่' },
+        ] },
       ],
       vocabulary: [
         { word: 'accomplish', meaning: 'ทำสำเร็จ', phonetic: '/əˈkɑmplɪʃ/', thaiReading: 'อะ-คาม-พลิช', example: 'She accomplished all her goals.' },
@@ -536,6 +684,12 @@ const DATA = {
         { en: 'I\'d rather stay home.', th: 'ฉันอยากอยู่บ้านมากกว่า', context: 'ความชอบ' },
         { en: 'It\'s worth trying.', th: 'น่าลอง', context: 'ให้กำลังใจ' },
         { en: 'Could you elaborate on that?', th: 'อธิบายเพิ่มเติมได้ไหม', context: 'ขอรายละเอียด' },
+        { en: 'That makes sense.', th: 'เข้าใจแล้ว/มีเหตุผล', context: 'ตอบรับคำอธิบาย' },
+        { en: 'I\'m not really sure about that.', th: 'ฉันไม่ค่อยแน่ใจเรื่องนั้น', context: 'แสดงความไม่แน่ใจ' },
+        { en: 'On the other hand, ...', th: 'ในทางกลับกัน...', context: 'เปรียบเทียบมุมมอง' },
+        { en: 'I\'ll get back to you on that.', th: 'เดี๋ยวจะตอบกลับเรื่องนี้อีกที', context: 'ขอเวลาตัดสินใจ' },
+        { en: 'It slipped my mind.', th: 'ฉันลืมไปเลย', context: 'บอกว่าลืม' },
+        { en: 'Let\'s look on the bright side.', th: 'มองแง่ดีกันเถอะ', context: 'ให้กำลังใจ' },
       ],
       dialogues: [
         {
@@ -547,11 +701,36 @@ const DATA = {
             { speaker: 'Candidate', en: 'I believe I can contribute to your team\'s growth.', th: 'ฉันเชื่อว่าช่วยพัฒนาทีมได้' },
           ],
         },
+        {
+          title: 'ขอความคิดเห็น',
+          lines: [
+            { speaker: 'A', en: 'What do you think about the new project plan?', th: 'คิดยังไงกับแผนโปรเจกต์ใหม่' },
+            { speaker: 'B', en: 'In my opinion, the timeline is too tight.', th: 'ในความเห็นฉัน กรอบเวลามันแน่นเกินไป' },
+            { speaker: 'A', en: 'I see your point. What would you suggest?', th: 'เข้าใจ แล้วคุณแนะนำยังไง' },
+            { speaker: 'B', en: 'Maybe we should extend the deadline by a week.', th: 'อาจจะเลื่อนกำหนดส่งออกไปอีกสัปดาห์' },
+          ],
+        },
+        {
+          title: 'แก้ปัญหาที่พัก',
+          lines: [
+            { speaker: 'Guest', en: 'I\'ve been waiting for my room for over an hour.', th: 'รอห้องพักมานานกว่าชั่วโมงแล้ว' },
+            { speaker: 'Staff', en: 'I\'m so sorry for the delay. Let me check on that right away.', th: 'ขอโทษจริงๆ ที่ล่าช้า เดี๋ยวเช็คให้เลยค่ะ' },
+            { speaker: 'Guest', en: 'I\'d appreciate it if you could speed things up.', th: 'อยากให้ช่วยเร่งหน่อยได้ไหม' },
+            { speaker: 'Staff', en: 'Of course. Your room will be ready in ten minutes.', th: 'ได้ค่ะ ห้องจะพร้อมภายในสิบนาที' },
+          ],
+        },
       ],
       sentences: [
         { en: 'I have never tried sushi before.', th: 'ฉันไม่เคยกินซูชิมาก่อน', note: 'Present Perfect' },
         { en: 'If I had more time, I would learn French.', th: 'ถ้ามีเวลามากขึ้น ฉันจะเรียนภาษาฝรั่งเศส', note: 'Second Conditional' },
         { en: 'The report was completed yesterday.', th: 'รายงานเสร็จเมื่อวาน', note: 'Passive' },
+        { en: 'I have been working here since 2020.', th: 'ฉันทำงานที่นี่มาตั้งแต่ปี 2020', note: 'Present Perfect Continuous' },
+        { en: 'She avoids eating fast food.', th: 'เธอหลีกเลี่ยงการกินอาหารฟาสต์ฟู้ด', note: 'Gerund after verb' },
+        { en: 'We have to submit the form by Monday.', th: 'เราต้องส่งแบบฟอร์มภายในวันจันทร์', note: 'Have to (obligation)' },
+        { en: 'He told me that he had already left.', th: 'เขาบอกฉันว่าเขาออกไปแล้ว', note: 'Reported speech' },
+        { en: 'You don\'t have to bring anything.', th: 'คุณไม่จำเป็นต้องเอาอะไรมา', note: 'No obligation' },
+        { en: 'This medicine should be taken twice a day.', th: 'ยานี้ควรทานวันละสองครั้ง', note: 'Passive voice' },
+        { en: 'If you call now, you will still catch him.', th: 'ถ้าโทรตอนนี้ ก็ยังทันเขาอยู่', note: 'First Conditional' },
       ],
     },
 
@@ -562,10 +741,35 @@ const DATA = {
       description: 'สื่อสารคล่องแคล่ว อธิบายมุมมองที่ซับซ้อน เข้าใจเนื้อหาเชิงนามธรรม',
       canDo: ['โต้แย้งและให้เหตุผลซับซ้อน', 'เขียนเรียงความเชิงวิเคราะห์', 'เข้าใจภาพยนตร์และรายการโทรทัศน์', 'เจรจาธุรกิจ', 'ใช้ภาษาเชิงอ้อม'],
       grammar: [
-        { topic: 'Second Conditional', rule: 'If + Past, would + V — สมมติฐานที่ไม่เป็นจริง', examples: ['If I were rich, I would travel the world.', 'If she studied more, she would pass.'] },
-        { topic: 'Third Conditional', rule: 'If + Past Perfect, would have + V3 — เสียดายเรื่องในอดีต', examples: ['If I had known, I would have helped.', 'If they had left earlier, they wouldn\'t have missed the train.'] },
-        { topic: 'Modal verbs (deduction)', rule: 'must, might, can\'t สำหรับเดา/สรุป', examples: ['She must be at home.', 'It might rain later.', 'He can\'t have finished already.'] },
-        { topic: 'Relative clauses', rule: 'who, which, that, whose ขยายคำนาม', examples: ['The man who called is my boss.', 'This is the book that I recommended.'] },
+        { topic: 'Second Conditional', rule: 'พูดถึงสถานการณ์สมมติที่ไม่เป็นจริงในปัจจุบัน/อนาคต (ใช้ were กับทุกประธาน)', structure: 'If + Past Simple, ... would + V1', examples: [
+          { en: 'If I were rich, I would travel the world.', th: 'ถ้าฉันรวย ฉันจะเดินทางไปรอบโลก' },
+          { en: 'If she studied more, she would pass.', th: 'ถ้าเธอเรียนมากกว่านี้ เธอจะสอบผ่าน' },
+        ] },
+        { topic: 'Third Conditional', rule: 'พูดถึงสิ่งที่ไม่เกิดขึ้นจริงในอดีต แสดงความเสียดายหรือสมมติย้อนหลัง', structure: 'If + Past Perfect, ... would have + V3', examples: [
+          { en: 'If I had known, I would have helped.', th: 'ถ้าฉันรู้ตั้งแต่ตอนนั้น ฉันคงช่วยไปแล้ว' },
+          { en: 'If they had left earlier, they wouldn\'t have missed the train.', th: 'ถ้าพวกเขาออกไปเร็วกว่านี้ ก็คงไม่พลาดรถไฟ' },
+        ] },
+        { topic: 'Modal verbs (deduction)', rule: 'must ใช้เดาแบบมั่นใจว่าจริง might ใช้เดาแบบไม่แน่ใจ can\'t ใช้เดาแบบมั่นใจว่าไม่จริง', structure: 'must/might/can\'t + V1 (ปัจจุบัน) | must/might/can\'t + have + V3 (อดีต)', examples: [
+          { en: 'She must be at home.', th: 'เธอต้องอยู่บ้านแน่ๆ' },
+          { en: 'It might rain later.', th: 'เดี๋ยวฝนอาจจะตก' },
+          { en: 'He can\'t have finished already.', th: 'เขาคงยังทำไม่เสร็จหรอก' },
+        ] },
+        { topic: 'Relative clauses', rule: 'ใช้ who/that กับคน which/that กับสิ่งของ whose แสดงความเป็นเจ้าของ เพื่อขยายความคำนามข้างหน้า', structure: 'Noun + who/which/that/whose + clause', examples: [
+          { en: 'The man who called is my boss.', th: 'ผู้ชายที่โทรมาคือเจ้านายของฉัน' },
+          { en: 'This is the book that I recommended.', th: 'นี่คือหนังสือที่ฉันแนะนำ' },
+        ] },
+        { topic: 'Passive Voice (all tenses)', rule: 'ใช้ passive กับ tense ต่างๆ ได้ เช่น future, perfect โดยเปลี่ยนรูป be ให้ตรงกับ tense', structure: 'Subject + be (tense) + V3 (+ by...)', examples: [
+          { en: 'The report will be sent tomorrow.', th: 'รายงานจะถูกส่งพรุ่งนี้' },
+          { en: 'The house has been sold.', th: 'บ้านหลังนี้ถูกขายไปแล้ว' },
+        ] },
+        { topic: 'Causative (have/get something done)', rule: 'ใช้เมื่อให้คนอื่นทำสิ่งใดสิ่งหนึ่งให้เรา แทนที่จะทำเอง', structure: 'Subject + have/get + object + V3', examples: [
+          { en: 'I had my car repaired.', th: 'ฉันเอารถไปให้ช่างซ่อม' },
+          { en: 'She got her hair cut yesterday.', th: 'เมื่อวานเธอไปตัดผมมา' },
+        ] },
+        { topic: 'Wish & If only', rule: 'ใช้แสดงความปรารถนาหรือเสียดายในสิ่งที่ต่างจากความจริง โดยใช้ Past Simple สำหรับปัจจุบัน และ Past Perfect สำหรับอดีต', structure: 'wish/if only + Past Simple (ปัจจุบัน) | wish/if only + Past Perfect (อดีต)', examples: [
+          { en: 'I wish I had more free time.', th: 'ฉันอยากมีเวลาว่างมากกว่านี้' },
+          { en: 'If only I had studied harder.', th: 'ถ้าฉันตั้งใจเรียนมากกว่านี้ก็คงดี' },
+        ] },
       ],
       vocabulary: [
         { word: 'ambiguous', meaning: 'คลุมเครือ', phonetic: '/æmˈbɪgjuəs/', thaiReading: 'แอม-บิก-ยู-อัส', example: 'His instructions were ambiguous.' },
@@ -714,6 +918,12 @@ const DATA = {
         { en: 'It goes without saying that...', th: 'ไม่ต้องบอกก็รู้ว่า...', context: 'เน้นความชัดเจน' },
         { en: 'I take your point, however...', th: 'เข้าใจที่คุณบอก แต่...', context: 'โต้แย้งสุภาพ' },
         { en: 'To put it bluntly, ...', th: 'พูดตรงๆ ก็คือ...', context: 'พูดตรง' },
+        { en: 'There\'s no denying that...', th: 'ปฏิเสธไม่ได้เลยว่า...', context: 'ยืนยันข้อเท็จจริง' },
+        { en: 'I\'d like to raise a concern about...', th: 'ขอเสนอข้อกังวลเกี่ยวกับ...', context: 'ประชุม/เป็นทางการ' },
+        { en: 'That\'s a fair point, but...', th: 'ก็มีเหตุผลอยู่ แต่...', context: 'โต้แย้งอย่างสุภาพ' },
+        { en: 'Let\'s weigh up the pros and cons.', th: 'มาชั่งน้ำหนักข้อดีข้อเสียกัน', context: 'วิเคราะห์การตัดสินใจ' },
+        { en: 'I can\'t stress this enough.', th: 'ย้ำเลยว่าเรื่องนี้สำคัญมาก', context: 'เน้นย้ำ' },
+        { en: 'We\'re on the same page.', th: 'เราเข้าใจตรงกัน', context: 'ยืนยันความเข้าใจ' },
       ],
       dialogues: [
         {
@@ -725,11 +935,36 @@ const DATA = {
             { speaker: 'Analyst', en: 'I\'d estimate around fifty thousand dollars.', th: 'ประมาณ 50,000 ดอลลาร์' },
           ],
         },
+        {
+          title: 'เจรจาต่อรอง',
+          lines: [
+            { speaker: 'Supplier', en: 'We can offer a 5% discount if you order in bulk.', th: 'ถ้าสั่งจำนวนมาก ลดให้ 5%' },
+            { speaker: 'Buyer', en: 'That\'s appreciated, but we were hoping for closer to 10%.', th: 'ขอบคุณ แต่เราหวังว่าจะได้สัก 10%' },
+            { speaker: 'Supplier', en: 'Let me check with my manager and get back to you.', th: 'ขอเช็คกับหัวหน้าก่อนแล้วจะแจ้งกลับ' },
+            { speaker: 'Buyer', en: 'Sounds fair. I\'ll wait for your call.', th: 'โอเค รอโทรกลับนะ' },
+          ],
+        },
+        {
+          title: 'ให้ feedback เพื่อนร่วมงาน',
+          lines: [
+            { speaker: 'A', en: 'I wanted to give you some feedback on the presentation.', th: 'อยากให้ feedback เรื่องพรีเซนต์หน่อย' },
+            { speaker: 'B', en: 'Sure, I\'m open to hearing it.', th: 'ได้เลย พร้อมรับฟัง' },
+            { speaker: 'A', en: 'The content was great, but the slides were a bit text-heavy.', th: 'เนื้อหาดีมาก แต่สไลด์ตัวหนังสือเยอะไปหน่อย' },
+            { speaker: 'B', en: 'That\'s fair. I\'ll simplify them next time.', th: 'เข้าใจ ครั้งหน้าจะทำให้กระชับขึ้น' },
+          ],
+        },
       ],
       sentences: [
         { en: 'Had I known about the meeting, I would have prepared slides.', th: 'ถ้ารู้เรื่องประชุม ฉันจะเตรียมสไลด์', note: 'Third Conditional inverted' },
         { en: 'The project, which took two years, was finally completed.', th: 'โปรเจกต์ที่ใช้เวลา 2 ปี เสร็จสมบูรณ์', note: 'Relative clause' },
         { en: 'She might have forgotten about the appointment.', th: 'เธออาจลืมนัด', note: 'Modal deduction past' },
+        { en: 'The new policy will be announced next week.', th: 'นโยบายใหม่จะถูกประกาศสัปดาห์หน้า', note: 'Future passive' },
+        { en: 'I had my laptop fixed at the shop.', th: 'ฉันเอาแล็ปท็อปไปให้ร้านซ่อม', note: 'Causative' },
+        { en: 'I wish I had taken that job offer.', th: 'ฉันอยากได้รับข้อเสนองานนั้นจัง (แต่ไม่ได้รับ)', note: 'Wish + Past Perfect' },
+        { en: 'This bridge was built over a hundred years ago.', th: 'สะพานแห่งนี้ถูกสร้างมากว่าร้อยปีแล้ว', note: 'Passive voice' },
+        { en: 'If she hadn\'t missed the flight, she would be here now.', th: 'ถ้าเธอไม่พลาดเที่ยวบิน ตอนนี้เธอคงอยู่ที่นี่แล้ว', note: 'Mixed conditional' },
+        { en: 'The manager whose team won the award was promoted.', th: 'ผู้จัดการที่ทีมได้รับรางวัลได้รับการเลื่อนตำแหน่ง', note: 'Relative clause (whose)' },
+        { en: 'They must have left already; the lights are off.', th: 'พวกเขาต้องออกไปแล้วแน่ๆ ไฟปิดหมด', note: 'Modal deduction' },
       ],
     },
 
@@ -740,10 +975,34 @@ const DATA = {
       description: 'ใช้ภาษาได้ยืดหยุ่์เพื่อวัตถุประสงค์ทางสังคม วิชาการ และมืออาชีพ',
       canDo: ['เขียนรายงานและบทความเชิงวิชาการ', 'เข้าใจนัยและอารมณ์ขัน', 'นำเสนออย่างมีโครงสร้าง', 'ใช้คำศัพท์เฉพาะทาง', 'ปรับระดับภาษาตามบริบท'],
       grammar: [
-        { topic: 'Inversion', rule: 'กลับลำดับประธาน-กริยาเพื่อเน้น', examples: ['Never have I seen such beauty.', 'Not only did she win, but she broke the record.'] },
-        { topic: 'Cleft sentences', rule: 'เน้นส่วนหนึ่งของประโยค', examples: ['It was John who called.', 'What I need is more time.'] },
-        { topic: 'Subjunctive', rule: 'โหมดสมมติในภาษาเป็นทางการ', examples: ['I suggest that he be present.', 'It is essential that she arrive on time.'] },
-        { topic: 'Discourse markers', rule: 'เชื่อมความคิดในการเขียน/พูดขั้นสูง', examples: ['Nevertheless, the results were positive.', 'Conversely, the other group declined.'] },
+        { topic: 'Inversion', rule: 'สลับตำแหน่งประธาน-กริยาหลังคำเน้นความ (never, not only, rarely) เพื่อให้น้ำหนักเชิงวรรณศิลป์แบบทางการ', structure: 'Negative adverb + auxiliary + subject + V1', examples: [
+          { en: 'Never have I seen such beauty.', th: 'ฉันไม่เคยเห็นความงดงามเช่นนี้มาก่อนเลย' },
+          { en: 'Not only did she win, but she broke the record.', th: 'เธอไม่เพียงแค่ชนะ แต่ยังทำลายสถิติอีกด้วย' },
+        ] },
+        { topic: 'Cleft sentences', rule: 'แยกประโยคเพื่อเน้นส่วนที่ต้องการให้ความสำคัญเป็นพิเศษ', structure: 'It is/was + focus + who/that... | What + clause + is/was...', examples: [
+          { en: 'It was John who called.', th: 'คนที่โทรมาคือจอห์นต่างหาก' },
+          { en: 'What I need is more time.', th: 'สิ่งที่ฉันต้องการคือเวลาที่มากกว่านี้' },
+        ] },
+        { topic: 'Subjunctive', rule: 'ใช้กริยารูปฐาน (base form) ในอนุประโยคที่ตามหลังคำแนะนำหรือความจำเป็นในภาษาทางการ', structure: 'suggest/recommend/essential that + subject + V1 (base form)', examples: [
+          { en: 'I suggest that he be present.', th: 'ฉันขอแนะนำให้เขาเข้าร่วมด้วย' },
+          { en: 'It is essential that she arrive on time.', th: 'จำเป็นอย่างยิ่งที่เธอต้องมาถึงตรงเวลา' },
+        ] },
+        { topic: 'Discourse markers', rule: 'คำเชื่อมความคิดขั้นสูงสำหรับการเขียน/พูดที่เป็นทางการ เช่นแสดงความขัดแย้งหรือมุมมองตรงข้าม', structure: 'Discourse marker, + clause', examples: [
+          { en: 'Nevertheless, the results were positive.', th: 'อย่างไรก็ตาม ผลลัพธ์ออกมาเป็นบวก' },
+          { en: 'Conversely, the other group declined.', th: 'ในทางกลับกัน อีกกลุ่มหนึ่งกลับลดลง' },
+        ] },
+        { topic: 'Participle clauses', rule: 'ใช้ V-ing หรือ V3 แทนอนุประโยคเพื่อย่อประโยคให้กระชับขึ้นในงานเขียนทางการ', structure: 'V-ing/V3 clause, + main clause', examples: [
+          { en: 'Having finished the report, she went home.', th: 'หลังจากทำรายงานเสร็จ เธอก็กลับบ้าน' },
+          { en: 'Written in 1920, the novel remains popular today.', th: 'นวนิยายที่เขียนในปี 1920 ยังคงได้รับความนิยมจนถึงปัจจุบัน' },
+        ] },
+        { topic: 'Hedging language', rule: 'ใช้คำหรือโครงสร้างเพื่อลดความมั่นใจของข้อความ เหมาะกับงานเขียนวิชาการที่ต้องระมัดระวังคำพูด', structure: 'It seems/appears that... | tend to... | may/might + V1', examples: [
+          { en: 'It would appear that the results are inconclusive.', th: 'ดูเหมือนว่าผลลัพธ์ยังสรุปไม่ได้ชัดเจน' },
+          { en: 'This trend tends to occur in larger organizations.', th: 'แนวโน้มนี้มักเกิดขึ้นในองค์กรขนาดใหญ่' },
+        ] },
+        { topic: 'Advanced conditionals with modals', rule: 'ผสม modal verbs กับโครงสร้าง conditional เพื่อแสดงความเป็นไปได้หรือคำแนะนำที่ซับซ้อน', structure: 'If + clause, ... could/might/should + V1', examples: [
+          { en: 'If the funding is approved, the project could start next quarter.', th: 'ถ้างบได้รับการอนุมัติ โปรเจกต์อาจเริ่มได้ในไตรมาสหน้า' },
+          { en: 'Were the data accurate, we might reach a different conclusion.', th: 'หากข้อมูลถูกต้อง เราอาจได้ข้อสรุปที่ต่างออกไป' },
+        ] },
       ],
       vocabulary: [
         { word: 'meticulous', meaning: 'พิถีพิถัน', phonetic: '/məˈtɪkjələs/', thaiReading: 'มะ-ทิก-ยะ-ลัส', example: 'She is meticulous about every detail.' },
@@ -892,6 +1151,12 @@ const DATA = {
         { en: 'The implications are far-reaching.', th: 'ผลกระทบกว้างขวาง', context: 'วิเคราะห์' },
         { en: 'To all intents and purposes, ...', th: 'โดยพื้นฐานแล้ว...', context: 'สรุป' },
         { en: 'Notwithstanding the challenges, ...', th: 'แม้มีอุปสรรค...', context: 'เขียนเชิงวิชาการ' },
+        { en: 'This raises a number of pertinent questions.', th: 'เรื่องนี้ก่อให้เกิดคำถามสำคัญหลายข้อ', context: 'วิเคราะห์เชิงลึก' },
+        { en: 'The evidence points to a clear conclusion.', th: 'หลักฐานชี้ไปสู่ข้อสรุปที่ชัดเจน', context: 'สรุปงานวิจัย' },
+        { en: 'On closer inspection, the data reveals...', th: 'เมื่อพิจารณาอย่างละเอียด ข้อมูลเผยให้เห็นว่า...', context: 'วิเคราะห์ข้อมูล' },
+        { en: 'It would be remiss of me not to mention...', th: 'คงไม่เหมาะสมถ้าไม่กล่าวถึง...', context: 'พูดในที่ประชุม/นำเสนอ' },
+        { en: 'The argument hinges on the assumption that...', th: 'ข้อโต้แย้งนี้ขึ้นอยู่กับสมมติฐานที่ว่า...', context: 'วิพากษ์วิจารณ์' },
+        { en: 'By and large, the initiative has proven successful.', th: 'โดยรวมแล้วโครงการนี้ประสบความสำเร็จ', context: 'สรุปผลงาน' },
       ],
       dialogues: [
         {
@@ -903,11 +1168,36 @@ const DATA = {
             { speaker: 'Student', en: 'I see. A longitudinal study might yield more conclusive data.', th: 'เข้าใจ การศึกษาระยะยาวน่าจะได้ข้อมูลชัดเจนกว่า' },
           ],
         },
+        {
+          title: 'นำเสนอผลงานต่อผู้บริหาร',
+          lines: [
+            { speaker: 'Presenter', en: 'Allow me to walk you through the key findings.', th: 'ขออนุญาตพาชมผลการศึกษาหลักๆ' },
+            { speaker: 'Executive', en: 'Please do. What stands out most to you?', th: 'เชิญเลย มีอะไรที่เด่นที่สุด' },
+            { speaker: 'Presenter', en: 'The data suggests untapped potential in the regional market.', th: 'ข้อมูลชี้ว่ามีศักยภาพที่ยังไม่ถูกใช้ในตลาดภูมิภาค' },
+            { speaker: 'Executive', en: 'That\'s a compelling case. Let\'s discuss the next steps.', th: 'น่าสนใจมาก มาคุยขั้นตอนต่อไปกันเลย' },
+          ],
+        },
+        {
+          title: 'วิจารณ์บทความเชิงวิชาการ',
+          lines: [
+            { speaker: 'Reviewer A', en: 'The methodology section lacks sufficient rigor, in my view.', th: 'ส่วนวิธีวิจัยยังขาดความรัดกุมในความเห็นฉัน' },
+            { speaker: 'Reviewer B', en: 'I concur, though the literature review is thorough.', th: 'เห็นด้วย แต่ทบทวนวรรณกรรมทำได้ละเอียดดี' },
+            { speaker: 'Reviewer A', en: 'Perhaps we should request a revision before publication.', th: 'บางทีเราควรขอให้แก้ไขก่อนตีพิมพ์' },
+            { speaker: 'Reviewer B', en: 'Agreed. I\'ll draft the feedback letter.', th: 'ตกลง ฉันจะร่างจดหมาย feedback ให้' },
+          ],
+        },
       ],
       sentences: [
         { en: 'Rarely do we encounter such a compelling argument.', th: 'แทบไม่เจอข้อโต้แย้งน่าเชื่อถือเช่นนี้', note: 'Inversion' },
         { en: 'It is the methodology that distinguishes this research.', th: 'วิธีการวิจัยคือสิ่งที่แตกต่าง', note: 'Cleft sentence' },
         { en: 'The findings, albeit preliminary, are encouraging.', th: 'ผลลัพธ์แม้ยังเบื้องต้น ก็น่าสนใจ', note: 'Formal connector' },
+        { en: 'Having reviewed the data, the committee approved the proposal.', th: 'หลังจากทบทวนข้อมูลแล้ว คณะกรรมการอนุมัติข้อเสนอ', note: 'Participle clause' },
+        { en: 'It would seem that the policy has had limited impact.', th: 'ดูเหมือนว่านโยบายนี้จะส่งผลกระทบจำกัด', note: 'Hedging language' },
+        { en: 'Were the proposal to be accepted, funding would follow shortly.', th: 'หากข้อเสนอได้รับการยอมรับ เงินทุนก็จะตามมาในไม่ช้า', note: 'Formal inversion conditional' },
+        { en: 'I recommend that the deadline be extended.', th: 'ฉันขอแนะนำให้ขยายกำหนดเวลาออกไป', note: 'Subjunctive' },
+        { en: 'What the report fails to mention is the long-term risk.', th: 'สิ่งที่รายงานไม่ได้กล่าวถึงคือความเสี่ยงระยะยาว', note: 'Cleft sentence' },
+        { en: 'Not until the data was reanalyzed did the error become apparent.', th: 'จนกระทั่งวิเคราะห์ข้อมูลใหม่ ข้อผิดพลาดจึงปรากฏชัด', note: 'Inversion (not until)' },
+        { en: 'The theory, though widely accepted, has recently come under scrutiny.', th: 'ทฤษฎีนี้แม้เป็นที่ยอมรับกันอย่างกว้างขวาง แต่เพิ่งถูกตั้งคำถามเมื่อไม่นานนี้', note: 'Concession clause' },
       ],
     },
 
@@ -918,10 +1208,34 @@ const DATA = {
       description: 'เข้าใจทุกสิ่งที่ได้ยินและอ่น สรุปข้อมูลจากแหล่งต่างๆ แสดงออกได้อย่างคล่องแคล่ว',
       canDo: ['เข้าใจภาษาพูดเร็วและสำเนียงต่างๆ', 'เขียนบทความวิชาการระดับมหาวิทยาลัย', 'ใช้สำนวนและอุปมาได้ถูกต้อง', 'แปลความนัยเชิงวัฒนธรรม', 'สื่อสารระดับเจ้าของภาษา'],
       grammar: [
-        { topic: 'Ellipsis & substitution', rule: 'ละคำที่ซ้ำเพื่อความกระชับและเป็นธรรมชาติ', examples: ['I think so. / I hope not.', 'She works harder than I do.'] },
-        { topic: 'Fronting', rule: 'ย้ายส่วนประโยคมาไว้หน้าเพื่อเน้น', examples: ['Especially important is the first chapter.', 'Gone are the days when we waited.'] },
-        { topic: 'Mixed conditionals', rule: 'ผสมเวลาระหว่างเงื่อนไข', examples: ['If I had studied medicine, I would be a doctor now.', 'If she were more confident, she would have applied.'] },
-        { topic: 'Advanced passive structures', rule: 'รูป passive ที่ซับซ้อน', examples: ['He is believed to have left the country.', 'The issue is being dealt with.'] },
+        { topic: 'Ellipsis & substitution', rule: 'ละคำที่ซ้ำจากประโยคก่อนหน้า หรือใช้คำแทน (so, do) เพื่อความกระชับและเป็นธรรมชาติ', structure: '..., so/not (ellipsis) | ... + do/does/did (substitution)', examples: [
+          { en: 'I think so. / I hope not.', th: 'ฉันคิดว่างั้นนะ / ฉันหวังว่าจะไม่ใช่' },
+          { en: 'She works harder than I do.', th: 'เธอทำงานหนักกว่าฉัน' },
+        ] },
+        { topic: 'Fronting', rule: 'ย้ายส่วนขยายหรือกริยามาไว้ต้นประโยคเพื่อเน้นความสำคัญ มักพบในงานเขียนวรรณกรรม/ทางการ', structure: 'Adjective/Adverb phrase + verb + subject...', examples: [
+          { en: 'Especially important is the first chapter.', th: 'บทแรกนี่แหละที่สำคัญเป็นพิเศษ' },
+          { en: 'Gone are the days when we waited.', th: 'วันเวลาที่เราต้องรอคอยนั้นผ่านไปแล้ว' },
+        ] },
+        { topic: 'Mixed conditionals', rule: 'ผสมเงื่อนไขต่างช่วงเวลากัน เช่น เงื่อนไขในอดีตส่งผลถึงปัจจุบัน หรือลักษณะนิสัยปัจจุบันส่งผลถึงอดีต', structure: 'If + Past Perfect, ... would + V1 (now) | If + Past Simple, ... would have + V3 (then)', examples: [
+          { en: 'If I had studied medicine, I would be a doctor now.', th: 'ถ้าตอนนั้นฉันเรียนแพทย์ ตอนนี้ฉันคงเป็นหมอไปแล้ว' },
+          { en: 'If she were more confident, she would have applied.', th: 'ถ้าเธอมั่นใจในตัวเองมากกว่านี้ เธอคงสมัครไปแล้ว' },
+        ] },
+        { topic: 'Advanced passive structures', rule: 'passive voice ที่ใช้กับกริยาแสดงความเชื่อ/ความคิดเห็น หรือใช้กับ present continuous', structure: 'Subject + is/are believed/thought + to + V1 | Subject + is/are being + V3', examples: [
+          { en: 'He is believed to have left the country.', th: 'เชื่อกันว่าเขาออกจากประเทศไปแล้ว' },
+          { en: 'The issue is being dealt with.', th: 'ปัญหานี้กำลังได้รับการจัดการอยู่' },
+        ] },
+        { topic: 'Nominalisation', rule: 'แปลงกริยาหรือคำคุณศัพท์ให้เป็นคำนามเพื่อสร้างน้ำเสียงที่เป็นทางการและกระชับในงานเขียนเชิงวิชาการ', structure: 'verb/adjective → noun form (e.g. decide → decision, aware → awareness)', examples: [
+          { en: 'The implementation of the policy led to significant improvement.', th: 'การนำนโยบายไปปฏิบัติทำให้เกิดการพัฒนาอย่างมีนัยสำคัญ' },
+          { en: 'Her awareness of cultural nuance impressed the panel.', th: 'ความตระหนักรู้เรื่องความละเอียดอ่อนทางวัฒนธรรมของเธอสร้างความประทับใจแก่คณะกรรมการ' },
+        ] },
+        { topic: 'Emphatic structures', rule: 'ใช้โครงสร้างเน้นความสำคัญขั้นสูง เช่น do/does/did เน้นกริยา หรือ the very/the only เน้นคำนาม', structure: 'do/does/did + V1 | the very/only + noun', examples: [
+          { en: 'I did warn you about the risks.', th: 'ฉันเตือนคุณเรื่องความเสี่ยงแล้วนะ' },
+          { en: 'This is the very reason we changed the strategy.', th: 'นี่แหละคือเหตุผลที่แท้จริงที่เราเปลี่ยนกลยุทธ์' },
+        ] },
+        { topic: 'Complex hypothetical structures', rule: 'ผสมโครงสร้าง hypothetical ขั้นสูงกับ subjunctive หรือ inversion เพื่อแสดงความสุภาพหรือความเป็นวิชาการขั้นสูงสุด', structure: 'Were it not for... | Should + subject + V1, ...', examples: [
+          { en: 'Were it not for her guidance, the project would have failed.', th: 'ถ้าไม่ได้คำแนะนำจากเธอ โปรเจกต์นี้คงล้มเหลวไปแล้ว' },
+          { en: 'Should you have any questions, feel free to contact us.', th: 'หากมีคำถามใดๆ ติดต่อเราได้เลย' },
+        ] },
       ],
       vocabulary: [
         { word: 'quintessential', meaning: 'เป็นตัวแทนที่สุด', phonetic: '/kˌwɪntɪˈsɛnʃəl/', thaiReading: 'ควิน-ทิ-เส็น-ชัล', example: 'She is the quintessential professional.' },
@@ -1070,6 +1384,12 @@ const DATA = {
         { en: 'By and large, ...', th: 'โดยรวมแล้ว...', context: 'สรุปภาพรวม' },
         { en: 'Be that as it may, ...', th: 'อย่างไรก็ตาม...', context: 'เปลี่ยนประเด็น' },
         { en: 'To the best of my knowledge, ...', th: 'เท่าที่ฉันทราบ...', context: 'ระมัดระวัง' },
+        { en: 'It behoves us to consider the alternatives.', th: 'เราสมควรพิจารณาทางเลือกอื่นด้วย', context: 'ทางการขั้นสูง' },
+        { en: 'This is by no means an isolated incident.', th: 'นี่ไม่ใช่เหตุการณ์เดี่ยวๆ เลยแม้แต่น้อย', context: 'เน้นความสำคัญ' },
+        { en: 'One cannot help but wonder whether...', th: 'อดสงสัยไม่ได้เลยว่า...', context: 'ตั้งคำถามเชิงวิพากษ์' },
+        { en: 'Suffice it to say that the results speak for themselves.', th: 'พูดได้แค่ว่าผลลัพธ์บอกอยู่แล้ว', context: 'สรุปแบบมั่นใจ' },
+        { en: 'The nuance here should not be understated.', th: 'ความละเอียดอ่อนตรงนี้ไม่ควรถูกมองข้าม', context: 'วิเคราะห์เชิงลึก' },
+        { en: 'In the final analysis, the outcome vindicated the approach.', th: 'สุดท้ายแล้วผลลัพธ์ก็พิสูจน์ว่าวิธีการนี้ถูกต้อง', context: 'สรุปงานวิจัย/บทความ' },
       ],
       dialogues: [
         {
@@ -1081,11 +1401,36 @@ const DATA = {
             { speaker: 'B', en: 'Undoubtedly. The ambiguity is entirely deliberate.', th: 'แน่นอน ความคลุมเครือเป็นเจตนา' },
           ],
         },
+        {
+          title: 'ถกประเด็นนโยบายสาธารณะ',
+          lines: [
+            { speaker: 'A', en: 'Critics contend that the reform disproportionately burdens small businesses.', th: 'ฝ่ายวิจารณ์อ้างว่าการปฏิรูปนี้สร้างภาระให้ธุรกิจขนาดเล็กอย่างไม่เป็นธรรม' },
+            { speaker: 'B', en: 'That said, proponents argue the long-term benefits outweigh the initial costs.', th: 'แต่ฝ่ายสนับสนุนแย้งว่าผลดีระยะยาวคุ้มกว่าต้นทุนเริ่มต้น' },
+            { speaker: 'A', en: 'Where do you stand on the matter, personally?', th: 'ส่วนตัวคุณคิดยังไงกับเรื่องนี้' },
+            { speaker: 'B', en: 'I remain cautiously optimistic, provided implementation is carefully monitored.', th: 'ยังมองในแง่ดีอย่างระมัดระวัง หากมีการติดตามผลอย่างรัดกุม' },
+          ],
+        },
+        {
+          title: 'เจรจาข้อตกลงระดับสูง',
+          lines: [
+            { speaker: 'A', en: 'We\'re prepared to concede on pricing, provided the exclusivity clause remains intact.', th: 'เรายอมในเรื่องราคาได้ ถ้าข้อผูกขาดยังคงอยู่' },
+            { speaker: 'B', en: 'That\'s a reasonable trade-off, though I\'d need board approval first.', th: 'ฟังดูสมเหตุสมผล แต่ต้องขออนุมัติจากบอร์ดก่อน' },
+            { speaker: 'A', en: 'Understood. Shall we reconvene once you\'ve consulted them?', th: 'เข้าใจ นัดคุยกันใหม่หลังปรึกษาเสร็จไหม' },
+            { speaker: 'B', en: 'That works. I\'ll have an answer by Thursday.', th: 'ได้เลย จะมีคำตอบภายในวันพฤหัส' },
+          ],
+        },
       ],
       sentences: [
         { en: 'So eloquent was her speech that the audience was moved to tears.', th: 'สุนทรพจน์ของเธอโดนใจผู้ฟังจนน้ำตาไหล', note: 'Fronting + inversion' },
         { en: 'The policy, having been thoroughly debated, was finally ratified.', th: 'นโยบายที่ถกเถียงมาอย่างทั่วถึง ได้รับการอนุมัติ', note: 'Perfect participle clause' },
         { en: 'He speaks as if he owned the place.', th: 'เขาพูดเหมือนเป็นเจ้าของที่นี่', note: 'Subjunctive as if' },
+        { en: 'The implementation of the reform was met with widespread skepticism.', th: 'การนำการปฏิรูปไปปฏิบัติถูกมองด้วยความกังขาอย่างกว้างขวาง', note: 'Nominalisation' },
+        { en: 'I did tell you this would happen.', th: 'ฉันบอกคุณแล้วว่าเรื่องนี้จะเกิดขึ้น', note: 'Emphatic do' },
+        { en: 'Were it not for the delay, the launch would have gone smoothly.', th: 'ถ้าไม่มีความล่าช้า การเปิดตัวคงราบรื่นแล้ว', note: 'Formal conditional inversion' },
+        { en: 'Seldom has such a controversial decision been so widely praised.', th: 'ไม่ค่อยมีการตัดสินใจที่ก่อให้เกิดข้อโต้แย้งมากขนาดนี้ที่ได้รับคำชมอย่างกว้างขวางเช่นนี้', note: 'Inversion (seldom)' },
+        { en: 'The committee\'s decision, controversial though it was, ultimately proved sound.', th: 'การตัดสินใจของคณะกรรมการ แม้จะก่อให้เกิดข้อโต้แย้ง แต่สุดท้ายก็พิสูจน์ว่าถูกต้อง', note: 'Concession (though inversion)' },
+        { en: 'Should the negotiations fail, both parties stand to lose considerably.', th: 'หากการเจรจาล้มเหลว ทั้งสองฝ่ายจะสูญเสียอย่างมาก', note: 'Formal conditional (Should)' },
+        { en: 'It is not so much the outcome as the process that concerns me.', th: 'สิ่งที่ฉันกังวลไม่ใช่ผลลัพธ์เท่ากับกระบวนการ', note: 'Emphatic contrast structure' },
       ],
     },
   },

@@ -224,7 +224,7 @@ const StatsStore = {
       weekStart: this._weekStartKey(),
       currentLevel: DATA.levels[0],
       user: userSeed,
-      counters: { chatMessages: 0, placementTests: 0, levelsViewed: 0 },
+      counters: { chatMessages: 0, placementTests: 0, levelsViewed: 0, practiceQuizzes: 0, speakingAttempts: 0 },
       viewedLevels: [],
       battle: { rankPoints: 0, wins: 0, losses: 0, streak: 0, bestStreak: 0, totalBattles: 0 },
       battleHistory: [],
@@ -336,6 +336,20 @@ const StatsStore = {
         today.minutes += 10;
         u.minutesToday += 10;
         s.monthlyStats.totalMinutes += 10;
+        break;
+      case 'practice':
+        s.counters.practiceQuizzes = (s.counters.practiceQuizzes || 0) + 1;
+        xpGain = 15 + Math.round((opts.scoreRatio || 0) * 15);
+        today.minutes += 4;
+        u.minutesToday += 4;
+        s.monthlyStats.totalMinutes += 4;
+        break;
+      case 'speaking':
+        s.counters.speakingAttempts = (s.counters.speakingAttempts || 0) + 1;
+        xpGain = 3 + Math.round((opts.scoreRatio || 0) * 5);
+        today.minutes += 1;
+        u.minutesToday += 1;
+        s.monthlyStats.totalMinutes += 1;
         break;
       case 'level_view':
         if (opts.level && !s.viewedLevels.includes(opts.level)) {

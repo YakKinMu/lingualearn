@@ -1,5 +1,169 @@
 let activeLevel = DATA.currentLevel;
 let activeDataTab = 'grammar';
+
+/* ===== Text-to-speech (pronunciation) =====
+   Uses the browser's built-in Web Speech API — no audio files or network
+   calls needed. Any element rendered with class "speak-btn" and a
+   data-say="..." attribute will read that text aloud in English when
+   clicked. Falls back to silently doing nothing on unsupported browsers. */
+const TTS_SUPPORTED = typeof window !== 'undefined' && 'speechSynthesis' in window;
+
+function speakEnglish(text) {
+  if (!TTS_SUPPORTED || !text) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'en-US';
+  utter.rate = 0.9;
+  window.speechSynthesis.speak(utter);
+}
+
+function speakBtnHtml(text, size) {
+  if (!TTS_SUPPORTED) return '';
+  const cls = size === 'sm' ? 'speak-btn speak-btn-sm' : 'speak-btn';
+  return `<button type="button" class="${cls}" data-say="${escapeHtml(text)}" aria-label="ฟังเสียงคำนี้" title="ฟังเสียง">🔊</button>`;
+}
+
+document.addEventListener('click', e => {
+  const btn = e.target.closest('.speak-btn');
+  if (!btn) return;
+  speakEnglish(btn.dataset.say || '');
+});
+
+/* ===== Speaking practice (mic) =====
+   Uses the Web Speech API's SpeechRecognition to record what the learner
+   says aloud, then compares it against the target English text and shows
+   a rough accuracy score with feedback. Only Chrome/Edge/Safari support
+   this API — the mic button simply isn't rendered anywhere else. */
+const SpeechRecognitionCtor = typeof window !== 'undefined' ? (window.SpeechRecognition || window.webkitSpeechRecognition) : null;
+const SPEECH_RECOGNITION_SUPPORTED = !!SpeechRecognitionCtor;
+
+function micBtnHtml(text, size) {
+  if (!SPEECH_RECOGNITION_SUPPORTED) return '';
+  const cls = size === 'sm' ? 'mic-btn mic-btn-sm' : 'mic-btn';
+  return `<button type="button" class="${cls}" data-target="${escapeHtml(text)}" aria-label="ฝึกพูดประโยคนี้" title="ฝึกพูด">🎤</button>`;
+}
+
+function normalizeSpeech(text) {
+  return (text || '')
+    .toLowerCase()
+    .replace(/[.,!?;:"“”'’()]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function levenshteinDistance(a, b) {
+  const m = a.length, n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+function speechSimilarity(target, heard) {
+  const a = normalizeSpeech(target);
+  const b = normalizeSpeech(heard);
+  if (!a && !b) return 100;
+  const dist = levenshteinDistance(a, b);
+  const maxLen = Math.max(a.length, b.length, 1);
+  return Math.max(0, Math.round((1 - dist / maxLen) * 100));
+}
+
+let speakPanelEl = null;
+function ensureSpeakPanel() {
+  if (speakPanelEl && document.body.contains(speakPanelEl)) return speakPanelEl;
+  const panel = document.createElement('div');
+  panel.id = 'speak-check-panel';
+  panel.className = 'speak-check-panel hidden';
+  panel.innerHTML = `
+    <button type="button" class="speak-check-close" id="speak-check-close" aria-label="ปิด">✕</button>
+    <div class="speak-check-body" id="speak-check-body"></div>
+  `;
+  document.body.appendChild(panel);
+  panel.querySelector('#speak-check-close').addEventListener('click', () => panel.classList.add('hidden'));
+  speakPanelEl = panel;
+  return panel;
+}
+
+function checkSpeaking(targetText) {
+  if (!targetText) return;
+  const panel = ensureSpeakPanel();
+  const body = panel.querySelector('#speak-check-body');
+  panel.classList.remove('hidden', 'speak-good', 'speak-ok', 'speak-bad');
+
+  if (!SPEECH_RECOGNITION_SUPPORTED) {
+    body.innerHTML = `
+      <p class="speak-target">🎯 ${escapeHtml(targetText)}</p>
+      <p class="speak-msg">เบราว์เซอร์นี้ยังไม่รองรับการฝึกพูด ลองใช้ Chrome หรือ Edge บนคอมพิวเตอร์นะ</p>
+    `;
+    return;
+  }
+
+  body.innerHTML = `
+    <p class="speak-target">🎯 ${escapeHtml(targetText)}</p>
+    <p class="speak-msg speak-listening">🎤 กำลังฟัง... พูดประโยคนี้ได้เลย</p>
+  `;
+
+  const recognition = new SpeechRecognitionCtor();
+  recognition.lang = 'en-US';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  recognition.onresult = (event) => {
+    const heard = event.results[0][0].transcript;
+    const score = speechSimilarity(targetText, heard);
+    let cls = 'speak-bad', msg = 'ลองใหม่อีกครั้งนะ 🔁';
+    if (score >= 85) { cls = 'speak-good'; msg = 'เป๊ะเลย! ออกเสียงดีมาก 🎉'; }
+    else if (score >= 60) { cls = 'speak-ok'; msg = 'เกือบแล้ว ลองอีกทีนะ 💪'; }
+    panel.classList.add(cls);
+    body.innerHTML = `
+      <p class="speak-target">🎯 ${escapeHtml(targetText)}</p>
+      <p class="speak-heard">คุณพูดว่า: “${escapeHtml(heard)}”</p>
+      <p class="speak-score">${score}% ตรงกัน</p>
+      <p class="speak-msg">${msg}</p>
+      <button type="button" class="btn btn-outline btn-sm" id="speak-retry-btn">🎤 ลองอีกครั้ง</button>
+    `;
+    body.querySelector('#speak-retry-btn')?.addEventListener('click', () => checkSpeaking(targetText));
+    if (typeof StatsStore !== 'undefined') StatsStore.record('speaking', { scoreRatio: score / 100 });
+  };
+
+  recognition.onerror = (event) => {
+    let msg = 'เกิดข้อผิดพลาด ลองใหม่อีกครั้งนะ';
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') msg = 'กรุณาอนุญาตให้เว็บใช้ไมโครโฟน แล้วลองใหม่';
+    else if (event.error === 'no-speech') msg = 'ไม่ได้ยินเสียงเลย ลองพูดอีกครั้ง';
+    panel.classList.add('speak-bad');
+    body.innerHTML = `
+      <p class="speak-target">🎯 ${escapeHtml(targetText)}</p>
+      <p class="speak-msg">${msg}</p>
+      <button type="button" class="btn btn-outline btn-sm" id="speak-retry-btn">🎤 ลองอีกครั้ง</button>
+    `;
+    body.querySelector('#speak-retry-btn')?.addEventListener('click', () => checkSpeaking(targetText));
+  };
+
+  try {
+    recognition.start();
+  } catch {
+    body.innerHTML = `
+      <p class="speak-target">🎯 ${escapeHtml(targetText)}</p>
+      <p class="speak-msg">เริ่มไมโครโฟนไม่ได้ ลองใหม่อีกครั้ง</p>
+    `;
+  }
+}
+
+document.addEventListener('click', e => {
+  const micBtn = e.target.closest('.mic-btn');
+  if (!micBtn) return;
+  checkSpeaking(micBtn.dataset.target || '');
+});
 const PAGE = document.body?.dataset.page || 'levels';
 
 const AUTH_REDIRECTING = (() => {
@@ -315,10 +479,26 @@ function buildLbPodium(top3) {
   const order = [1, 0, 2]; // index into top3: 2nd place, 1st place, 3rd place
   const medals = ['🥈', '🥇', '🥉'];
 
+  // Raw height = this player's RP as a % of the leader's RP. When two
+  // adjacent ranks have close RP (e.g. 2nd and 3rd only a few RP apart),
+  // their raw bars end up almost the same height and the podium reads as
+  // flat. MIN_GAP enforces a minimum percentage-point drop from each rank
+  // to the next so the step-down between bars stays visually clear even
+  // when the underlying scores are close; it only kicks in when needed,
+  // so a genuinely large real gap is left untouched.
+  const MIN_GAP = 16;
+  const heights = top3.map(p => p ? Math.max(20, Math.round((p.rankRP / maxRP) * 100)) : null);
+  for (let i = 1; i < heights.length; i++) {
+    if (heights[i] == null || heights[i - 1] == null) continue;
+    if (heights[i - 1] - heights[i] < MIN_GAP) {
+      heights[i] = Math.max(20, heights[i - 1] - MIN_GAP);
+    }
+  }
+
   const bars = order.map((idx, pos) => {
     const p = top3[idx];
     if (!p) return '<div class="lb-bar-col lb-bar-empty"></div>';
-    const pct = Math.max(28, Math.round((p.rankRP / maxRP) * 100));
+    const pct = heights[idx];
     return `
       <div class="lb-bar-col${p.isYou ? ' you' : ''}">
         <div class="lb-bar-track">
@@ -473,17 +653,31 @@ function renderLevelContent(level) {
   renderPhrases(c.phrases);
   renderDialogues(c.dialogues);
   renderSentences(c.sentences);
+  renderPracticeIntro(level);
 }
 
 function renderGrammar(items) {
   const el = document.getElementById('ldata-grammar');
   if (!el) return;
   el.innerHTML = items.map(g => `
-    <article class="data-card">
+    <article class="data-card grammar-card">
       <h3>${escapeHtml(g.topic)}</h3>
       <p class="data-rule">${escapeHtml(g.rule)}</p>
+      ${g.structure ? `<p class="grammar-structure"><span class="structure-label">โครงสร้าง</span>${escapeHtml(g.structure)}</p>` : ''}
       <div class="examples-list">
-        ${g.examples.map(ex => `<div class="example-item"><span class="ex-icon">✓</span><span>${escapeHtml(ex)}</span></div>`).join('')}
+        ${g.examples.map(ex => `
+          <div class="example-item">
+            <span class="ex-icon">✓</span>
+            <span class="ex-text">
+              <span class="ex-en-row">
+                <span class="ex-en">${escapeHtml(ex.en || ex)}</span>
+                ${speakBtnHtml(ex.en || ex, 'sm')}
+                ${micBtnHtml(ex.en || ex, 'sm')}
+              </span>
+              ${ex.th ? `<span class="ex-th">${escapeHtml(ex.th)}</span>` : ''}
+            </span>
+          </div>
+        `).join('')}
       </div>
     </article>
   `).join('');
@@ -497,9 +691,9 @@ function renderLevelVocab(items, level) {
       <thead><tr><th>คำศัพท์</th><th>ความหมาย</th><th>ตัวอย่างประโยค</th><th>ระดับ</th></tr></thead>
       <tbody>${items.map(v => `
         <tr>
-          <td><strong>${escapeHtml(v.word)}</strong></td>
+          <td class="word-cell"><strong>${escapeHtml(v.word)}</strong>${speakBtnHtml(v.word, 'sm')}${micBtnHtml(v.word, 'sm')}</td>
           <td>${escapeHtml(v.meaning)}</td>
-          <td class="example-cell"><em>${escapeHtml(v.example)}</em></td>
+          <td class="example-cell"><em>${escapeHtml(v.example)}</em>${speakBtnHtml(v.example, 'sm')}${micBtnHtml(v.example, 'sm')}</td>
           <td><span class="level-tag" style="background:${DATA.levelContent[level].color}22;color:${DATA.levelContent[level].color}">${level}</span></td>
         </tr>
       `).join('')}</tbody>
@@ -512,7 +706,10 @@ function renderPhrases(items) {
   if (!el) return;
   el.innerHTML = items.map(p => `
     <article class="data-card phrase-card">
-      <div class="phrase-en">${escapeHtml(p.en)}</div>
+      <div class="phrase-en-row">
+        <div class="phrase-en">${escapeHtml(p.en)}</div>
+        ${speakBtnHtml(p.en)}${micBtnHtml(p.en)}
+      </div>
       <div class="phrase-th">${escapeHtml(p.th)}</div>
       <span class="phrase-context">${escapeHtml(p.context)}</span>
     </article>
@@ -530,7 +727,10 @@ function renderDialogues(items) {
           <div class="dialogue-line">
             <span class="speaker">${escapeHtml(line.speaker)}</span>
             <div>
-              <p class="line-en">${escapeHtml(line.en)}</p>
+              <div class="line-en-row">
+                <p class="line-en">${escapeHtml(line.en)}</p>
+                ${speakBtnHtml(line.en, 'sm')}${micBtnHtml(line.en, 'sm')}
+              </div>
               <p class="line-th">${escapeHtml(line.th)}</p>
             </div>
           </div>
@@ -545,11 +745,139 @@ function renderSentences(items) {
   if (!el) return;
   el.innerHTML = items.map(s => `
     <article class="data-card sentence-card">
-      <p class="sent-en">${escapeHtml(s.en)}</p>
+      <div class="sent-en-row">
+        <p class="sent-en">${escapeHtml(s.en)}</p>
+        ${speakBtnHtml(s.en)}${micBtnHtml(s.en)}
+      </div>
       <p class="sent-th">${escapeHtml(s.th)}</p>
       <span class="sent-note">${escapeHtml(s.note)}</span>
     </article>
   `).join('');
+}
+
+/* ===== Practice quiz (ฝึกฝน) =====
+   Quick multiple-choice drill built from the current level's phrases and
+   example sentences: shows the Thai meaning, learner picks the matching
+   English line out of 4 choices, with instant feedback and a score at the
+   end. Regenerated (freshly shuffled) each time it's started. */
+let practiceState = null;
+
+function shuffleArr(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildPracticeQuestions(level, count = 8) {
+  const c = DATA.levelContent[level];
+  if (!c) return [];
+  const pool = [
+    ...(c.phrases || []).map(p => ({ en: p.en, th: p.th })),
+    ...(c.sentences || []).map(s => ({ en: s.en, th: s.th })),
+  ];
+  const allEn = pool.map(p => p.en);
+  const picks = shuffleArr(pool).slice(0, Math.min(count, pool.length));
+  return picks.map(item => {
+    const distractors = shuffleArr(allEn.filter(en => en !== item.en)).slice(0, 3);
+    const options = shuffleArr([item.en, ...distractors]);
+    return { th: item.th, answer: item.en, options };
+  });
+}
+
+function renderPracticeIntro(level) {
+  const el = document.getElementById('ldata-practice');
+  if (!el) return;
+  const c = DATA.levelContent[level];
+  const poolSize = (c?.phrases?.length || 0) + (c?.sentences?.length || 0);
+  practiceState = null;
+  el.innerHTML = `
+    <div class="practice-intro">
+      <h3>🧠 ฝึกฝนแปลสำนวน & ประโยค — ระดับ ${level}</h3>
+      <p>ดูความหมายภาษาไทย แล้วเลือกประโยคภาษาอังกฤษที่ตรงกันจาก 4 ตัวเลือก มีให้ฝึก ${poolSize} รายการในระดับนี้</p>
+      <button class="btn btn-primary" id="practice-start-btn" ${poolSize < 4 ? 'disabled' : ''}>เริ่มฝึกฝน</button>
+      ${poolSize < 4 ? '<p class="practice-note">ระดับนี้มีข้อมูลไม่พอสำหรับสร้างแบบฝึกหัด</p>' : ''}
+    </div>
+  `;
+  document.getElementById('practice-start-btn')?.addEventListener('click', () => startPractice(level));
+}
+
+function startPractice(level) {
+  const questions = buildPracticeQuestions(level);
+  practiceState = { level, questions, index: 0, correct: 0, answered: false };
+  renderPracticeQuestion();
+}
+
+function renderPracticeQuestion() {
+  const el = document.getElementById('ldata-practice');
+  if (!el || !practiceState) return;
+  const { questions, index, correct } = practiceState;
+
+  if (index >= questions.length) {
+    const total = questions.length;
+    const ratio = total ? correct / total : 0;
+    StatsStore.record('practice', { scoreRatio: ratio, level: practiceState.level });
+    refreshUI();
+    el.innerHTML = `
+      <div class="practice-result">
+        <h3>🎉 ฝึกฝนเสร็จแล้ว!</h3>
+        <p class="practice-score">ตอบถูก <strong>${correct}/${total}</strong> ข้อ</p>
+        <p>${ratio >= 0.8 ? 'เก่งมาก! คล่องแคล่วดีเยี่ยม 🌟' : ratio >= 0.5 ? 'ทำได้ดี ลองฝึกอีกรอบเพื่อความคล่องขึ้น 💪' : 'ไม่เป็นไร ลองทบทวนสำนวน/ประโยคแล้วฝึกใหม่นะ 📚'}</p>
+        <button class="btn btn-primary" id="practice-again-btn">ฝึกอีกครั้ง</button>
+      </div>
+    `;
+    document.getElementById('practice-again-btn')?.addEventListener('click', () => startPractice(practiceState.level));
+    return;
+  }
+
+  const q = questions[index];
+  el.innerHTML = `
+    <div class="practice-quiz">
+      <div class="practice-progress">ข้อ ${index + 1} / ${questions.length} · ถูก ${correct}</div>
+      <p class="practice-prompt">${escapeHtml(q.th)}</p>
+      <div class="practice-options">
+        ${q.options.map((opt, i) => `
+          <button type="button" class="practice-option" data-opt="${i}">${escapeHtml(opt)}</button>
+        `).join('')}
+      </div>
+      <div class="practice-feedback" id="practice-feedback"></div>
+    </div>
+  `;
+
+  el.querySelectorAll('.practice-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (practiceState.answered) return;
+      practiceState.answered = true;
+      const chosen = q.options[Number(btn.dataset.opt)];
+      const isCorrect = chosen === q.answer;
+      if (isCorrect) practiceState.correct += 1;
+
+      el.querySelectorAll('.practice-option').forEach(b => {
+        b.disabled = true;
+        if (b.textContent === q.answer) b.classList.add('correct');
+        else if (b === btn) b.classList.add('incorrect');
+      });
+
+      const fb = document.getElementById('practice-feedback');
+      if (fb) {
+        fb.innerHTML = `
+          <p class="${isCorrect ? 'fb-correct' : 'fb-incorrect'}">${isCorrect ? '✅ ถูกต้อง!' : '❌ ยังไม่ถูก คำตอบที่ถูกคือด้านบน'}</p>
+          <div class="practice-feedback-actions">
+            ${speakBtnHtml(q.answer)}
+            ${micBtnHtml(q.answer)}
+            <button type="button" class="btn btn-outline btn-sm" id="practice-next-btn">${index + 1 < questions.length ? 'ข้อถัดไป →' : 'ดูผลลัพธ์ →'}</button>
+          </div>
+        `;
+        document.getElementById('practice-next-btn')?.addEventListener('click', () => {
+          practiceState.index += 1;
+          practiceState.answered = false;
+          renderPracticeQuestion();
+        });
+      }
+    });
+  });
 }
 
 function renderAllVocabulary() {
@@ -613,11 +941,11 @@ function updateVocabTable() {
 
   tbody.innerHTML = items.map(v => `
     <tr>
-      <td><strong>${escapeHtml(v.word)}</strong></td>
+      <td class="word-cell"><strong>${escapeHtml(v.word)}</strong>${speakBtnHtml(v.word, 'sm')}${micBtnHtml(v.word, 'sm')}</td>
       <td class="phonetic-cell">${escapeHtml(v.phonetic || '-')}</td>
       <td class="thai-reading-cell">${escapeHtml(v.thaiReading || '-')}</td>
       <td>${escapeHtml(v.meaning)}</td>
-      <td class="example-cell"><em>${escapeHtml(v.example)}</em></td>
+      <td class="example-cell"><em>${escapeHtml(v.example)}</em>${speakBtnHtml(v.example, 'sm')}${micBtnHtml(v.example, 'sm')}</td>
       <td><span class="level-tag" style="background:${DATA.levelContent[v.level].color}22;color:${DATA.levelContent[v.level].color}">${v.level}</span></td>
     </tr>
   `).join('') || '<tr><td colspan="6" class="empty">ไม่พบคำศัพท์</td></tr>';

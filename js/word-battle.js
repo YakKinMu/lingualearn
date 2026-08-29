@@ -5,7 +5,7 @@ function buildBattleSentences() {
     c.sentences?.forEach(s => pool.push({ text: s.en, level: lv, hint: s.th }));
     c.phrases?.forEach(p => pool.push({ text: p.en, level: lv, hint: p.th }));
     c.grammar?.forEach(g => g.examples.forEach(ex => {
-      pool.push({ text: ex, level: lv, hint: g.topic });
+      pool.push({ text: ex.en || ex, level: lv, hint: g.topic });
     }));
     c.dialogues?.forEach(d => d.lines.forEach(l => {
       pool.push({ text: l.en, level: lv, hint: l.th });
